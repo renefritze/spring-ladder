@@ -120,7 +120,6 @@ class Match(Base):
 	results			= relation("Result", 		order_by="Result.died" )
 	ladder			= relation("Ladder" )
 
-
 class MatchSetting(Base):
 	__tablename__ 	= 'matchsettings'
 	id 				= Column( Integer, primary_key=True )
@@ -158,6 +157,22 @@ class Result(Base):
 		self.connected	= False
 		self.quit		= False
 		self.kicked		= False
+
+	def __cmp__(self,other):
+		assert isinstance(other,Result)
+		valuetocompare1 = -1
+		valuetocompare2 = -1
+		if self.disconnect < self.match.last_frame and self.quit:
+			valuetocompare1 = self.disconnect
+		if other.disconnect < self.match.last_frame and other.quit:
+			valuetocompare2 = other.disconnect
+		if self.quit != -1 and self.quit < self.match.last_frame:
+			valuetocompare1 = self.quit
+		if other.quit != -1 and other.quit < self.match.last_frame:
+			valuetocompare2 = other.quit
+		if other.kicked or self.kicked:
+			return 0
+		return valuetocompare1 < valuetocompare2
 
 class Bans(Base):
 	__tablename__	= 'bans'

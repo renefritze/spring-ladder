@@ -84,6 +84,7 @@ class LadderOptionsAdapter:
 class MatchInfoToTableAdapter:
 	def __init__(self, match ):
 		self.match = match
+		match.results.sort()
 		self.rows = []
 		self.rows.append( [ 'date'		, match.date] )
 		self.rows.append( [ 'modname'	, match.modname] )
