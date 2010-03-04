@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div >
+	<h3>Edit ladders</h3>
+	<ul>
+		{% for l in ladders %}
+			<li>
+				<a href="/admin/ladder?id={{l.id}}">{{ l.name }}</a>&nbsp;
+				<a href="/admin/recalc?id={{l.id}}">recalculate rankings</a>&nbsp;
+				{% if isglobal %}
+					<a href="/admin/deleteladder?id={{l.id}}">delete</a>&nbsp;
+					<a href="/admin/match?id={{l.id}}">matches</a>&nbsp;
+					<!--<a href="/admin/copyladder?id={{l.id}}">copy</a>&nbsp;-->
+				{% endif %}
+			</li>
+		{% endfor %}
+	</ul>
+</div>
+<div>
+		<a href="/admin/match">All matches</a>&nbsp;
+</div>
+{% if isglobal %}
+	<div >
+		<form name="input" action="/admin" method="POST">
+			<h3>New ladder</h3>
+			<label for="laddername">name</label>
+			<input id="laddername" name="laddername" type="text" value="" />
+			<input type="submit" name="addladder" value="add"/>
+		</form>
+	</div>
+{% endif %}
+{% endblock %}

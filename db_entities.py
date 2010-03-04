@@ -3,6 +3,7 @@ from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
 from datetime import datetime
+import hashlib
 
 Base = declarative_base()
 
@@ -33,6 +34,10 @@ class Ladder(Base):
 	min_ai_count	= Column( Integer )
 	max_ai_count	= Column( Integer )
 	ranking_algo_id	= Column( String(30) )
+	match_average_sum = Column( Integer )
+	match_average_count = Column( Integer )
+
+	options = relation( 'Option', order_by='Option.key' )
 
 	def __init__(self, name="noname"):
 		self.name = name
@@ -46,6 +51,8 @@ class Ladder(Base):
 		self.max_team_count = 2
 		self.min_ai_count	= 0
 		self.max_ai_count	= 0
+		self.match_average_sum = 0
+		self.match_average_count  = 0
 
 	def __str__(self):
 		try:
@@ -86,10 +93,18 @@ class Player(Base):
 		self.nick 		= nick
 		self.role 		= role
 		do_hide_results = False
-		server_id		= -1
+		self.server_id		= -1
 	def __str__(self):
 		return "Player(id:%d,server_id:%d) %s "%(self.id, self.server_id, self.nick)
 
+	def validate( self, password ):
+		if self.pwhash == '':
+			return False
+		return self.pwhash == hashlib.sha224(password).hexdigest()
+
+	def SetPassword( self, password ):
+		self.pwhash = hashlib.sha224(password).hexdigest()
+		
 class Match(Base):
 	__tablename__ 	= 'matches'
 	id 				= Column( Integer, primary_key=True )
@@ -104,7 +119,6 @@ class Match(Base):
 	settings    	= relation("MatchSetting", 	order_by="MatchSetting.key" )#, backref="match" )#this would auto-create a relation in MatchSetting too
 	results			= relation("Result", 		order_by="Result.died" )
 	ladder			= relation("Ladder" )
-
 
 class MatchSetting(Base):
 	__tablename__ 	= 'matchsettings'
@@ -144,6 +158,22 @@ class Result(Base):
 		self.quit		= False
 		self.kicked		= False
 
+	def __cmp__(self,other):
+		assert isinstance(other,Result)
+		valuetocompare1 = -1
+		valuetocompare2 = -1
+		if self.disconnect < self.match.last_frame and self.quit:
+			valuetocompare1 = self.disconnect
+		if other.disconnect < self.match.last_frame and other.quit:
+			valuetocompare2 = other.disconnect
+		if self.quit != -1 and self.quit < self.match.last_frame:
+			valuetocompare1 = self.quit
+		if other.quit != -1 and other.quit < self.match.last_frame:
+			valuetocompare2 = other.quit
+		if other.kicked or self.kicked:
+			return 0
+		return valuetocompare1 < valuetocompare2
+
 class Bans(Base):
 	__tablename__	= 'bans'
 	id 				= Column( Integer, primary_key=True )
@@ -167,6 +197,7 @@ class IRanks(Base):
 	id 				= Column( Integer, primary_key=True )
 	player_id 		= Column( Integer, ForeignKey( Player.id ) )
 	ladder_id 		= Column( Integer, ForeignKey( Ladder.id ) )
+	def compare(otherRank): return -1,0,1
 """
 class SimpleRanks(Base):
 	__tablename__	= 'simpleranks'
@@ -180,6 +211,15 @@ class SimpleRanks(Base):
 
 	player			= relation("Player")
 
+	def __str__(self):
+		return '%d points'%self.points
+
+	def compare(self,otherRank):
+		if otherRank:
+			return cmp( self.points, otherRank.points )
+		else:
+			return 1
+			
 class GlickoRanks(Base):
 	__tablename__	= 'glickoranks'
 	id 				= Column( Integer, primary_key=True )
@@ -193,6 +233,15 @@ class GlickoRanks(Base):
 		self.rd		=  350
 
 	player			= relation("Player")
+
+	def __str__(self):
+		return '%f/%f (rating/rating deviation)'%(self.rating,self.rd)
+
+	def compare(self,otherRank):
+		if otherRank:
+			return cmp( self.rating, otherRank.rating )
+		else:
+			return 1
 
 class Config(Base):
 	__tablename__	= 'config'

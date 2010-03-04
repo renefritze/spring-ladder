@@ -1,24 +1,57 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>{{ladder.name}} ladder</h1>
-{% if ladder.description %}
-	<p>{{ladder.description}}
-	</p>
-{% endif %}
-<hr>
-<h2>Top {{ rank_table.rows|length }}</h2>
-<ol>
-	{% for row in rank_table.rows %}
-	<li> <a href="/viewmatch.py?ladder={{ladder.id}}&player={{row[0]}}"> {{row[0]}}</a> </li>
-	{% endfor %}
-</ol>
-<hr>
-<a href="/viewmatch.py?ladder={{ladder.id}}">Matches</a>
-</br>
-<a href="/scoreboard.py?id={{ladder.id}}">Full List</a>
-</br>
-<a href="/viewrules.py?id={{ladder.id}}">Rules</a>
-<hr>
-
+<div id='ladderview'>
+	<h1>{{ladder.name}} ladder</h1>
+	{% if ladder.description %}
+		<p>{{ladder.description}}
+		</p>
+	{% endif %}
+	<a href="/rules?id={{ladder.id}}">Rules</a>
+	<div style="clear:both;"></div>
+	<table style='width:80%;'>
+		<tr>
+			<td style="width:50%;">
+				<h2>Top {{ rank_table.rows|length }} players</h2>
+				<table class='padded'>
+					{% for row in rank_table.rows %}
+						<tr>
+							{% if loop.index > 3 %}
+								<td style='text-align:center;'> {{loop.index}}. </td>
+							{% else %}
+								<td style='text-align:center;'> <img src="/static/place_{{loop.index}}_small.png" /> </td>
+							{% endif %}
+							<td>
+								<a href="/match?ladder={{ladder.id}}&player={{row[0]}}"> {{row[0]}}</a>
+							</td>
+						</tr>
+					{% endfor %}
+				</table>
+				
+			</td>
+			<td style="width:50%;">
+				<h2>Last {{ matches|length }} matches</h2>
+				<ul>
+					{% for l in matches %}
+						<li><a href="/match?id={{ l.id }}">({{l.date}})</a> </li>
+					{% endfor %}
+				</ul>
+			</td>
+		</tr>
+		<tr>
+			<td>
+				<a href="/scoreboard?id={{ladder.id}}">full list</a>
+			</td>
+			<td>
+				<a href="/match?ladder={{ladder.id}}">all matches</a>
+			</td>
+		</tr>
+	</table>
+	<div style="clear:both;"></div>
+	</br>
+	
+	</br>
+	
+	<hr>
+</div>
 {% endblock %}

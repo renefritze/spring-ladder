@@ -432,6 +432,14 @@ class Main:
 				if self.db.AccessCheck( -1, fromwho, Roles.LadderAdmin ):
 					self.notifyuser( socket, fromwho, fromwhere, ispm, helpstring_ladder_admin )
 				self.notifyuser( socket, fromwho, fromwhere, ispm, helpstring_user )
+			if command == "!help":
+				ispm = True
+				self.notifyuser( socket, fromwho, fromwhere, ispm, "Hello, I am a bot to manage and keep stats of ladder games.\nYou can use the following commands:")
+				if self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
+					self.notifyuser( socket, fromwho, fromwhere, ispm, helpstring_global_admin )
+				if self.db.AccessCheck( -1, fromwho, Roles.LadderAdmin ):
+					self.notifyuser( socket, fromwho, fromwhere, ispm, helpstring_ladder_admin )
+				self.notifyuser( socket, fromwho, fromwhere, ispm, helpstring_user )
 			if command == "!laddercopy":
 				if not self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
 					self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
@@ -674,29 +682,71 @@ class Main:
 					#log
 					return
 				else:
-					try:
-						self.notifyuser( socket, fromwho, fromwhere, ispm, "Beginning to recalculate rankings." )
-						self.db.RecalcRankings(ladderid)
-						self.notifyuser( socket, fromwho, fromwhere, ispm, "Done recalculating the ranks." )
-					except:
-						self.notifyuser( socket, fromwho, fromwhere, ispm, "Couldn't recalulcate the ranks." )
-			if command == "!ladderrecalculateranks":
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "Beginning to recalculate rankings." )
+					self.db.RecalcRankings(ladderid)
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "Done recalculating the ranks." )
+			if command == "!laddermergeaccounts":
 				if len(args) < 2 or len(args) > 3:
 					self.notifyuser( socket, fromwho, fromwhere, ispm, "Invalid command syntax, check !ladderhelp for usage." )
+					return
 				if not self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
 					self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
 					#log
 					return
 				else:
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "Beginning to merge the accounts." )
+					if len(args) == 2:
+						answer = self.db.MergeAccounts( args[0], args[1] )
+					else:
+						answer = self.db.MergeAccounts( args[0], args[1], bool(args[2]) )
+					self.notifyuser( socket, fromwho, fromwhere, ispm, answer )
+
+			if command == "!ladderauth":
+				if len(args) < 1 or len(args) > 2:
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "Invalid command syntax, check !ladderhelp for usage." )
+					return
+				else:
+					nick = fromwho
+					if len(args) == 2:
+						if not self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
+							self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
+							#log
+							return
+						nick = args[1]
+					ok = self.db.SetPassword( nick, args[0] )
+					if ok:
+						self.notifyuser( socket, fromwho, fromwhere, ispm, "Password sucessfully set" )
+					else:
+						self.notifyuser( socket, fromwho, fromwhere, ispm, "Password setting failed" )
+				
+			if command == "!ladderopponent":
+				if len(args) != 1:
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "Invalid command syntax, check !ladderhelp for usage." )
+					return
+				ladderid = int(args[0])
+				if not self.db.AccessCheck( ladderid, fromwho, Roles.User ):
+					self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
+					#log
+					return
+				if not self.db.LadderExists( ladderid ):
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "Invalid ladderID." )
+					return
+				userlist, ranks = GlobalRankingAlgoSelector.GetCandidateOpponents( fromwho, ladderid, self.db )
+				opponent_found = False
+				for user in userlist:
 					try:
-						self.notifyuser( socket, fromwho, fromwhere, ispm, "Beginning to merge the accounts." )
-						if len(args) == 2:
-							answer = self.db.MergeAccounts( args[0], args[1] )
-						else:
-							answer = self.db.MergeAccounts( args[0], args[1], bool(args[2]) )
-						self.notifyuser( socket, fromwho, fromwhere, ispm, answer )
-					except:
-						self.notifyuser( socket, fromwho, fromwhere, ispm, "Couldn't recalulcate the ranks." )
+						userstatus = self.tsc.users[user]
+					except: # skip offline
+						continue
+					if userstatus.ingame:
+						continue
+					if userstatus.afk:
+						continue
+					opponent_found = True
+					self.notifyuser( socket, fromwho, fromwhere, ispm, ranks[user] )
+				if not opponent_found:
+					self.notifyuser( socket, fromwho, fromwhere, ispm, "No suitable candidates as opponent are available currently, try again later." )
+
 		except DbConnectionLostException, e:
 			self.notifyuser( socket, fromwho, fromwhere, ispm, "Database temporarily lost in processing your command, please try again" )
 			err = 'DbConnectionLostException: %s\nargs: %s\ncmd" %s\nwho: %s\nwhere" \n'%(e.getTrace(), args, command, fromwho,fromwhere )

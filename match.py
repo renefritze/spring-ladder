@@ -2,7 +2,7 @@
 
 from db_entities import *
 from ranking import *
-import time, datetime
+import time, datetime, hashlib, traceback, sys
 from customlog import Log
 
 class InvalidOptionSetup( Exception ):
@@ -87,6 +87,7 @@ class MatchToDbWrapper:
 		session.add( match )
 		session.commit()
 		#session.refresh()
+		matchid = match.id
 		for key,val in self.options.iteritems():
 			s = MatchSetting()
 			s.key = key
@@ -112,6 +113,7 @@ class MatchToDbWrapper:
 		self.CommitPlayerResults(session,match)
 		session.close()
 		GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id ).Update( ladder.id, match, db )
+		return matchid
 
 	def CommitPlayerResults(self,session,match):
 		for name,result in self.players.iteritems():
@@ -226,14 +228,21 @@ class AutomaticMatchToDbWrapper(MatchToDbWrapper):
 		return True
 
 	def ParseSpringOutput(self):
-		setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
-		self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
-		self.bots		= parseSec( getSectionContect( setup_section, 'AIS' 		) )
-		self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
-		self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
-		self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
-		self.replay		= parseSec( getSectionContect( self.springoutput, 'DEMO' 		) )['demopath']
-		game_section 	= getSectionContect( self.springoutput, 'GAME' )
+		try:
+			setup_section 	= getSectionContect( self.springoutput, 'SETUP' )
+			self.teams		= parseSec( getSectionContect( setup_section, 'TEAMS' 		) )
+			self.bots		= parseSec( getSectionContect( setup_section, 'AIS' 		) )
+			self.allies		= parseSec( getSectionContect( setup_section, 'ALLYTEAMS' 	) )
+			self.options 	= parseSec( getSectionContect( setup_section, 'OPTIONS' 	) )
+			self.restr		= parseSec( getSectionContect( setup_section, 'RESTRICTIONS') )
+			self.replay		= parseSec( getSectionContect( self.springoutput, 'DEMO' 		) )['demopath']
+			game_section 	= getSectionContect( self.springoutput, 'GAME' )
+		except Exception, e:
+			fn = open( 'output_parse_error-' + hashlib.sha224(self.springoutput).hexdigest(), 'w' )
+			fn.write( str(traceback.print_exc()) )
+			fn.write( '\n\n' + self.springoutput )
+			raise e
+			
 		num_players = len(self.teams)
 		self.players = dict()
 		self.gameid = 'no game id found'
@@ -310,6 +319,7 @@ class ManualMatchToDbWrapper(MatchToDbWrapper):
 		self.bots			= bots
 		self.allies_map		= allies_map
 		self.teams_map		= teams_map
+		self.replay			= ""
 
 	def CheckvalidPlayerSetup( self, db ):
 		for p in self.playerscores.keys():

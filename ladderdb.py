@@ -3,14 +3,14 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
 from sqlalchemy import exc
-import datetime
+import traceback, datetime, math, hashlib
 from db_entities import *
 from ranking import *
 from match import *
 import time
 from customlog import *
 
-current_db_rev = 3
+current_db_rev = 4
 
 class ElementExistsException( Exception ):
 	def __init__(self, element):
@@ -238,34 +238,33 @@ class LadderDB:
 	def AssignServerID(self,name, serverplayerid ):
 		session = self.sessionmaker()
 		player = session.query( Player ).filter( Player.nick == name ).first()
-		playerfound = False
 		if player:
-			playerfound = True
 			player.server_id = serverplayerid
 			session.add( player )
 			session.commit()
-		session.close()
-		if not playerfound:
-			raise ElementNotFoundException( str(playerid) )
+			session.close()
+		else:
+			session.close()
+			raise ElementNotFoundException( str(serverplayerid) )
 
 	def RenamePlayer(self,serverplayerid,newname):
 		session = self.sessionmaker()
 		player = session.query( Player ).filter( Player.server_id == serverplayerid ).first()
-		playerfound = False
 		if player:
-			playerfound = True
 			player.nick = newname
 			session.add(player)
 			session.commit()
-		session.close()
-		if not playerfound:
-			raise ElementNotFoundException( str(playerid) )
+			session.close()
+		else:
+			session.close()
+			raise ElementNotFoundException( str(serverplayerid) )
 
 	def GetPlayer( self, name ):
 		session = self.sessionmaker()
 		player = session.query( Player ).filter( Player.nick == name ).first()
 		if not player:
 			self.AddPlayer( name, Roles.User )
+			player = session.query( Player ).filter( Player.nick == name ).first()
 		session.close()
 		return player
 
@@ -280,7 +279,18 @@ class LadderDB:
 		"""false skips validation check of output against ladder rules"""
 		if not isinstance( matchresult, MatchToDbWrapper ):
 			raise TypeError
-		matchresult.CommitMatch(self,doValidation)
+		return matchresult.CommitMatch(self,doValidation)
+
+	def GetMatchReplay( self, match_id ):
+		session = self.sessionmaker()
+		match = session.query( Match ).filter( Match.id == match_id ).first()
+		if match:
+			replaypath = match.replay
+			session.close()
+			return replaypath
+		else:
+			session.close()
+			raise ElementNotFoundException( str(match_id) )
 
 	def GetRanks( self, ladder_id, player_name=None,limit=-1 ):
 		session = self.sessionmaker()
@@ -318,6 +328,30 @@ class LadderDB:
 					res[rank] = ( algoname, ladder.name )
 		session.close()
 		return res
+
+	def GetPlayerPosition(self, ladder_id, player_id):
+		session = self.sessionmaker()
+		player = session.query( Player ).filter( Player.id == player_id ).first()
+		pos = -1
+		ranks = self.GetRanks( ladder_id )
+		count = 0
+		previousrank = None
+		same_rating_in_a_row = 0
+		for r in ranks:
+			if r.compare( previousrank ) != 0: # give the same position to players with the same rank
+				if same_rating_in_a_row == 0:
+					count += 1
+				else:
+					count += same_rating_in_a_row +1
+					same_rating_in_a_row = 0
+			else:
+				same_rating_in_a_row += 1
+			if r.player_id == player_id:
+				pos = count
+				break
+			previousrank = r
+		session.close()
+		return pos
 
 	def AccessCheck( self, ladder_id, username, role ):
 		session = self.sessionmaker()
@@ -385,35 +419,45 @@ class LadderDB:
 
 	def SetLadderRankingAlgo( self, ladder_id, algoname ):
 		ladder = self.GetLadder( ladder_id )
+		if ladder.ranking_algo_id != algoname:
+			session = self.sessionmaker()
+			ladder.ranking_algo_id = algoname
+			algo_instance = GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id )
+			entityType = algo_instance.GetDbEntityType()
+			ranks = session.query( entityType ).filter( entityType.ladder_id == ladder_id )
+			for r in ranks:
+				session.delete( r )
+			session.add( ladder )
+			session.commit()
+			session.close()
+			self.RecalcRankings( ladder_id )
+
+	def GetAvgMatchDelta( self, ladder_id ):
+		ladder = self.GetLadder( ladder_id )
+		if ladder.match_average_count == 0:
+			return 1
+		return ladder.match_average_sum / ladder.match_average_count
+
+	def UpdateAvgMatchDelta( self, ladder_id, player_delta ):
+		if player_delta == 0:
+			return
+		ladder = self.GetLadder( ladder_id )
 		session = self.sessionmaker()
-		ladder.ranking_algo_id = algoname
+		ladder.match_average_sum += player_delta
+		ladder.match_average_count += 1
 		session.add( ladder )
 		session.commit()
 		session.close()
 
-	def GetAvgMatchDelta( self, ladder_id, maxDate=None ):
-		session = self.sessionmaker()
-		if maxDate:
-			matches = session.query(Match).filter(Match.ladder_id == ladder_id ).filter(Match.date <= maxDate ).order_by(Match.date.desc()).all()
-		else:
-			matches = session.query(Match).filter(Match.ladder_id == ladder_id ).order_by(Match.date.desc()).all()
-		total = 0.0
-		for i in range( len(matches) -1 ):
-			diff = time.mktime(matches[i].date.timetuple())
-			diff -= time.mktime(matches[i+1].date.timetuple())
-			total += diff
-		session.close()
-		if len(matches) > 2:
-			return max(total,1) / float( len(matches) - 1  )
-		else:
-			return 1.0
-
 	def RecalcRankings( self, ladder_id ):
 		session = self.sessionmaker()
 		ladder = self.GetLadder( ladder_id )
+		ladder.match_average_sum = 0
+		ladder.match_average_count = 0
+		session.add( ladder )
 		algo_instance = GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id )
 		entityType = algo_instance.GetDbEntityType()
-		ranks = session.query( entityType ).filter( entityType.ladder_id == ladder_id ).all()
+		ranks = session.query( entityType ).filter( entityType.ladder_id == ladder_id )
 		for r in ranks:
 			session.delete( r )
 		session.commit()
@@ -454,12 +498,12 @@ class LadderDB:
 		ban = Bans( )
 		ban.player_id = player.id
 		if not banlength:
-			ban.end = datetime.max
+			ban.end = datetime.date.max
 		else:
 			try:
-				ban.end = datetime.now() + banlength
+				ban.end = datetime.datetime.now() + banlength
 			except OverflowError:
-				ban.end = datetime.max
+				ban.end = datetime.date.max
 		ban.ladder_id = ladder_id
 		session.add( ban )
 		session.commit()
@@ -471,7 +515,7 @@ class LadderDB:
 		bans = session.query( Bans ).filter( Bans.player_id == player.id ).filter( Bans.ladder_id == ladder_id ).all()
 		for b in bans:
 			if just_expire:
-				b.end = datetime.now()
+				b.end = datetime.datetime.now()
 				session.add( b )
 			else:
 				session.delete( b )
@@ -482,9 +526,9 @@ class LadderDB:
 	def GetBansPerLadder( self, ladder_id ):
 		session = self.sessionmaker()
 		if ladder_id == -1:
-			bans = session.query( Bans ).filter( Bans.end >= datetime.now() ).all()
+			bans = session.query( Bans ).filter( Bans.end >= datetime.datetime.now() ).all()
 		else:
-			bans = session.query( Bans ).filter( Bans.end >= datetime.now() ).filter( Bans.ladder_id == ladder_id ).all()
+			bans = session.query( Bans ).filter( Bans.end >= datetime.datetime.now() ).filter( Bans.ladder_id == ladder_id ).all()
 		session.close()
 		return bans
 
@@ -500,6 +544,8 @@ class LadderDB:
 		if not rev:
 			#default value
 			rev = -1
+		else:
+			rev = rev[0]
 		session.close()
 		return rev
 
@@ -515,7 +561,6 @@ class LadderDB:
 		session.close()
 
 	def UpdateDBScheme( self, oldrev, current_db_rev ):
-		global current_db_rev
 		session = self.sessionmaker()
 		if current_db_rev > oldrev:
 			if oldrev == -1:
@@ -525,13 +570,27 @@ class LadderDB:
 					r.kicked = False
 					r.timeout = False
 					session.add( r )
-			if oldrev < 3:
-				Player.__table__.append_column( Column( 'server_id', Integer, index=True ) )
-				for p in session.query( Player ):
-					p.server_id = -1
-					session.add( p )
+			if oldrev < 4:
+				try:
+					for p in session.query( Player ).all():
+						p.server_id = -1
+						session.add( p )
+				except:
+					print "execute: ALTER TABLE players ADD server_id int\n" * 67
+					exit(-1)
+
 		session.commit()
 		session.close()
+
+	def GetLadderByPlayer( self, player_id ):
+		session = self.sessionmaker()
+		ret = session.query( Ladder ).filter( Ladder.id.in_( session.query( Result.ladder_id ).\
+			filter( Result.player_id == player_id ) ) ).order_by( Ladder.id )
+		session.close()
+		if ret.count() > 0:
+			return ret.all()
+		else:
+			return []
 
 	def MergeAccounts( self, from_nick, to_nick, override_conflict = False ):
 		session = self.sessionmaker()
@@ -551,13 +610,14 @@ class LadderDB:
 			else:
 				#conflicting
 				conflicts.append( from_result )
+
 		if len( conflicts ) != 0:
 		 	if override_conflict:
 				result = "merge successful, the following matches have been automatically deleted since they contained conflicts:\n"
 				for result_table in conflicts:
 					match = session.query( Match ).filter( Match.id == result_table.match_id ).first()
 					laddername = session.query( Ladder ).filter( Ladder.id == match.ladder_id ).first()
-					result += "#%d (%s) ladder: %s (%d)\n" % match.id, match.date, laddername, match.ladder_id
+					result += "#%d (%s) ladder: %s (%d)\n" % (match.id, match.date, laddername, match.ladder_id)
 					#delete the match
 					for r in match.results:
 						session.delete( r )
@@ -566,15 +626,46 @@ class LadderDB:
 						session.delete( s )
 						session.commit()
 					session.delete( match )
-				session.commit()
 			else:
 				result = "merge failed: conflicts existing, please resolve them manually or use the override switch to automatically delete them; conflicting matches:\n"
 				for match in conflicts:
 					laddername = session.query( Ladder ).filter( Ladder.id == match.ladder_id ).first()
-					result += "#%d (%s) ladder: %s (%d)\n" % match.match_id, match.date, laddername, match.ladder_id
+					result += "#%d (%s) ladder: %s (%d)\n" % (match.match_id, match.date, laddername, match.ladder_id)
+		session.commit()
 		session.close()
 		if len(conflicts) == 0 or override_conflict: # no conflicts or conflicts autoresolved: recalc ranks and ban the o
 			for ladderid in recalc_ladders: # recalculate ladders which changed
 				self.RecalcRankings( ladderid )
 			self.BanPlayer( -1, from_nick )
-		return reset
+		return result
+
+	def GetRankAndPositionInfo(self, players, ladder_id ):
+		session = self.sessionmaker()
+		ladder = self.GetLadder( ladder_id )
+		res = dict()
+		for player in session.query( Player ).filter( Player.nick.in_(players) ):
+			aloginstance = GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id )
+			algoname = aloginstance.__class__.__name__
+			entityType = aloginstance.GetDbEntityType()
+			rank = session.query( entityType ).filter( entityType.ladder_id == ladder.id ).filter(entityType.player_id == player.id).first()
+			pos = self.GetPlayerPosition( ladder_id, player.id )
+			if rank:
+				res[player.nick] = ( ( rank, pos, entityType ) )
+		session.close()
+		return res
+
+	def SetPassword( self, nick, password ):
+		session = self.sessionmaker()
+		try:
+			player = self.GetPlayer( nick )
+			player.SetPassword( password )
+			#print "%s: %s"%(nick,player.pwhash)
+			session.add( player )
+			session.commit()
+			session.close()
+			return True
+		except ElementNotFoundException, e:
+			pass
+		session.close()
+		return False
+	
