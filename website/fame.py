@@ -22,7 +22,7 @@ def output(  ):
 			for l in ladders:
 				player_per_ladder = s.query( Result.player_id ).filter( Result.ladder_id == l.id ).group_by( Result.player_id ).count()
 				pos = db.GetPlayerPosition( l.id, pid )
-				score += ( 1 - ( pos / float( player_per_ladder ) ) ) * 1000
+				score += ( 0.5 - ( pos / float( player_per_ladder ) ) ) * 1000
 				l_names.append( '%s (%d)'%(l.name,pos) )
 			if ladders.count() > 0:
 				playername = s.query( Player.nick ).filter( Player.id == pid ).first()[0]
