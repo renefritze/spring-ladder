@@ -58,6 +58,7 @@ class Main:
 	gamestarted = False
 	joinedbattle = False
 	toshutdown = False
+	scriptpassword = ""
 	ladderid = -1
 	if platform.system() == "Windows":
 		scriptbasepath = os.environ['USERPROFILE']
@@ -83,7 +84,7 @@ class Main:
 				if not status.spec and player != self.app.config["nick"]:
 					players.append(player)
 			pregame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
-			
+
 			if self.ingame == True:
 				self.saybattle( self.socket, self.battleid, "Error: game is already running")
 				return
@@ -309,6 +310,8 @@ class Main:
 			self.script += "\n\tHostPort=" + self.hostport + ";"
 			self.script += "\n\tIsHost=0;"
 			self.script += "\n\tMyPlayerName=" + self.app.config["nick"] + ";"
+			if len(self.scriptpassword) > 0:
+				self.script += "\n\tMyPasswd=" + self.scriptpassword + ";"
 			self.script += "\n}"
 			f.write(self.script)
 			f.close()
@@ -355,6 +358,8 @@ class Main:
 		if command == "DISABLEUNITS":
 			for unit in args[1:]:
 				self.disabledunits[unit] = 0
+		if command == "JOINEDBATTLE" and len(args) > 2 and args[0] == self.nick:
+			self.scriptpassword = args[2]
 		if command == "SETSCRIPTTAGS":
 			for option in args[0].split():
 				pieces = parselist( option, "=" )
@@ -663,6 +668,8 @@ class Main:
 				if player in self.battle_statusmap:
 					del self.battle_statusmap[player]
 					self.FillTeamAndAllies()
+				if player == self.nick:
+					self.scriptpassword = ""
 		if command == "ADDBOT":
 			if len(args) != 6:
 				error( "invalid ADDBOT:%s"%(args) )
@@ -694,7 +701,7 @@ class Main:
 
 	def onloggedin(self,socket):
 		sendstatus( self, socket )
-		socket.send("JOINBATTLE " + str(self.battleid) + " " + self.battlepassword + "\n")
+		socket.send("JOINBATTLE %d %s %04x%04x\n" % ( self.battleid, self.battlepassword, rand() % 0xFFFF, rand() % 0xFFFF) )
 
 	def FillTeamAndAllies(self):
 		self.teams = dict()
