@@ -7,6 +7,7 @@ from db_entities import *
 from ladderdb import *
 from match import *
 from ranking import GlobalRankingAlgoSelector
+import random
 if platform.system() == "Windows":
 	import win32api
 
@@ -701,7 +702,8 @@ class Main:
 
 	def onloggedin(self,socket):
 		sendstatus( self, socket )
-		socket.send("JOINBATTLE %d %s %04x%04x\n" % ( self.battleid, self.battlepassword, rand() % 0xFFFF, rand() % 0xFFFF) )
+		ramdom.seed()
+		socket.send("JOINBATTLE %d %s %08x\n" % ( self.battleid, self.battlepassword, random.randint(0,2^32) )
 
 	def FillTeamAndAllies(self):
 		self.teams = dict()
