@@ -703,7 +703,7 @@ class Main:
 	def onloggedin(self,socket):
 		sendstatus( self, socket )
 		ramdom.seed()
-		socket.send("JOINBATTLE %d %s %08x\n" % ( self.battleid, self.battlepassword, random.randint(0,2^32) )
+		socket.send("JOINBATTLE %d %s %08x\n" % ( self.battleid, self.battlepassword, random.randint(0,2^32) ) )
 
 	def FillTeamAndAllies(self):
 		self.teams = dict()
