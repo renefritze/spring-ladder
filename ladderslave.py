@@ -75,6 +75,7 @@ class Main:
 	disabledunits = dict()
 	battlefounder = ""
 	hostip = ""
+	nick = self.app.config["nick"]
 	hostport = 0
 	def startspring(self,socket,g):
 		currentworkingdir = os.getcwd()
