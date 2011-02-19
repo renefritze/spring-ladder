@@ -9,7 +9,10 @@ from globe import config,staging
 @route('/static/:filename')
 def static_file(filename):
 	return send_file( filename, root=os.getcwd()+'/static/' )
-
+@route('/images/:filename')
+def image_file(filename):
+	return send_file( filename, root=os.getcwd()+'/images/' )
+	
 @route('/demos/:filename')
 def demos(filename):
 	return send_file( filename, root=os.getcwd()+'/demos/' )

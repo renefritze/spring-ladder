@@ -1,6 +1,13 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script type="text/javascript" src="/static/jquery.js"></script>  
+<script type="text/javascript" src="/static/diQuery-collapsiblePanel.js"></script>  
+<script language="javascript" type="text/javascript">
+    $(document).ready(function() {
+        $(".collapsibleContainer").collapsiblePanel();
+    });
+</script>
 <h1>Match #{{matchinfo.match.id}}</h1>
 <div>
 	<h3>Ladder: <a href="/ladder?id={{ladder.id}}" >{{ladder.name}}</a>
@@ -24,7 +31,7 @@
 		</tbody>
 	</table>
 </div>
-<div id='results'>
+<div id='results' >
 	<h3>Results</h3>
 	<table>
 		<thead>
@@ -74,8 +81,7 @@
 	</table>
 </div>
 <br/>
-<div>
-	<h3> Settings </h3>
+<div class="collapsibleContainer" title="Settings">
 	<table class="padded">
 		<tbody>
 		{% for s in matchinfo.match.settings %}
