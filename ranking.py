@@ -172,6 +172,8 @@ class SimpleRankAlgo(IRanking):
 		return SimpleRanks.points.desc()
 
 from glicko import GlickoRankAlgo
+from trueranks import TrueskillRankAlgo
 GlobalRankingAlgoSelector = RankingAlgoSelector()
 GlobalRankingAlgoSelector.RegisterAlgo( SimpleRankAlgo() )
 GlobalRankingAlgoSelector.RegisterAlgo( GlickoRankAlgo() )
+GlobalRankingAlgoSelector.RegisterAlgo( TrueskillRankAlgo() )
