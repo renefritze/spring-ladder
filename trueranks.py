@@ -51,7 +51,7 @@ class TrueskillRankAlgo(IRanking):
 					same_rating_in_a_row = 0
 			else:
 				same_rating_in_a_row += 1
-			ret += '#%d %s\t(%4.2f/%3.0f)\n'%(count,rank.player.nick,rank.mu, rank.sigma)
+			ret += '#%d %s\t(%4.2f/%3.4f)\n'%(count,rank.player.nick,rank.mu, rank.sigma)
 			previousrating = rank.mu
 		s.close()
 		return ret
@@ -86,7 +86,7 @@ class TrueskillRankAlgo(IRanking):
 
 	def GetWebRepresentation(self,rank_list,db):
 		ret = RankingTable()
-		ret.header = ['nick','rating','RD']
+		ret.header = ['nick','mu','sigma']
 		ret.rows = []
 		s = db.sessionmaker()
 		for rank in rank_list:
