@@ -266,7 +266,7 @@ class TrueskillRanks(Base):
 		self.mu 	= skill[0]
 		self.sigma 	= skill[1]
 		
-	def _getSkill(self,skill):
+	def _getSkill(self):
 		return (self.mu,self.sigma)
 		
 	skill = property(_getSkill,_setSkill)

@@ -20,6 +20,6 @@ def favi():
 
 if __name__=="__main__":
 	port = config['port']
-	debug(staging)
+	debug(True)
 	app = default_app()
 	run(app=app,server=PasteServer,host='localhost',port=port , reloader=False)

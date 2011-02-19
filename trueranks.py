@@ -3,7 +3,7 @@ from ranking import IRanking,RankingTable,calculateWinnerOrder
 from db_entities import TrueskillRanks,Player,Match,Result
 from sqlalchemy import or_, and_
 import math,time,datetime
-import trueskill
+from trueskill import trueskill
 
 class TrueskillRankAlgo(IRanking):
 
@@ -28,7 +28,8 @@ class TrueskillRankAlgo(IRanking):
 			ranks.append( rank )
 
 		trueskill.AdjustPlayers(ranks)
-		session.add ( ranks )
+		for rank in ranks:
+			session.add ( rank )
 		session.commit()
 
 		session.close()
@@ -98,4 +99,4 @@ class TrueskillRankAlgo(IRanking):
 		return TrueskillRanks
 
 	def OrderByKey(self):
-		return TrueskillRanks.rating.desc()
+		return TrueskillRanks.mu.desc()
