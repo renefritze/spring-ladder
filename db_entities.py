@@ -243,6 +243,43 @@ class GlickoRanks(Base):
 		else:
 			return 1
 
+class TrueskillRanks(Base):
+	__tablename__	= 'trueskillranks'
+	id 				= Column( Integer, primary_key=True )
+	player_id 		= Column( Integer, ForeignKey( Player.id ) )
+	ladder_id 		= Column( Integer, ForeignKey( Ladder.id ),index=True )
+	mu				= Column( Float )
+	sigma			= Column( Float )
+	
+	player			= relation("Player")
+
+	def __init__(self):
+		self.mu		= 25.0
+		self.sigma	= 25.0/3.0
+		#this is just a dummy that's used when updating rank from a match result
+		self.rank = -666
+
+	def combined(self):
+		return self.mu - 3*self.sigma
+		
+	def _setSkill(self,skill):
+		self.mu 	= skill[0]
+		self.sigma 	= skill[1]
+		
+	def _getSkill(self,skill):
+		return (self.mu,self.sigma)
+		
+	skill = property(_getSkill,_setSkill)
+
+	def __str__(self):
+		return '%f (%f|%f)'%(self.combined(),self.mu,self.sigma)
+
+	def compare(self,otherRank):
+		if otherRank:
+			return cmp( self.combined(), otherRank.combined() )
+		else:
+			return 1
+
 class Config(Base):
 	__tablename__	= 'config'
 	dbrevision		= Column( Integer, primary_key=True )
