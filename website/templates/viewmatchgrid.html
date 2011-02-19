@@ -40,7 +40,7 @@
 		</tr>
 	</tbody>
 	</table>
-	{% if limit > 0 %}
+	{% if limit > -1 %}
 		<h5>Showing last {{ matches|length }} matches -- <a href="/match?limit=-1">show all</a></h5>
 	{% endif %}
 </div>

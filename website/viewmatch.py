@@ -11,7 +11,7 @@ def output( ):
 	id = getSingleField( 'id', request )
 	player_name = getSingleField( 'player', request )
 	ladder_id = getSingleField( 'ladder', request )
-	limit = getSingleField( 'limit', request, 18 )
+	limit = int(getSingleField( 'limit', request, 18 ))
 	ret = ''
 	try:
 		s = db.sessionmaker()
@@ -39,7 +39,10 @@ def output( ):
 			ret = template.render(matches=matches, header=header_string )
 		elif not id:
 			template = env.get_template('viewmatchgrid.html')
-			matches = s.query( Match ).order_by(Match.date.desc())[:limit]
+			if limit > -1:
+				matches = s.query( Match ).order_by(Match.date.desc()).limit(limit).all()
+			else:
+				matches = s.query( Match ).order_by(Match.date.desc()).all()
 			ret = template.render( matches=matches, limit=limit )
 		else:
 			match = s.query( Match ).options(eagerload('settings')).filter(Match.id == id ).first()
