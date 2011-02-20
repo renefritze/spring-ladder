@@ -14,7 +14,7 @@
 
 	<table >
 		<theader>
-			<tr>
+			<tr class="evengridcell">
 				<th scope='col'>
 					<a href="/player?offset={{offset}}&limit={{limit}}
 						{% if order == 'nick'%}
@@ -41,7 +41,7 @@
 		{% for tuple in players %}
 			{% set p = tuple[0] %}
 			{% set c = tuple[1] %}
-			<tr>
+			<tr class={% if loop.index is even %} "evengridcell" {% else %} "unevengridcell" {% endif %} >
 				<td><a href="/player?player={{ p.nick }}">{{ p.nick }}</a> </li>
 				<td> {{ c }}</td>
 			</tr>
