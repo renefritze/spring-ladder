@@ -2,15 +2,13 @@
 
 {% block content %}
 {% set count = 1 %}
-<div id='matchgrid'>
-	<table cellpadding="5px" cellspacing="5px">
-	<tbody>
-		<tr>
+<div id='grid'>
+		<div class="gridrow">
 			{% for l in matches %}
 				{% if loop.index is even %}
-					<td class="evengridcell">
+					<div class="gridcell evengridcell">
 				{% else %}
-					<td class="unevengridcell">
+					<div class="gridcell unevengridcell">
 				{% endif %}
 					<h3>
 						<!--<a href="/viewmatch.py?id={{ l.id }}">Match #{{ l.id }}</a>
@@ -31,15 +29,14 @@
 				{% if l.replay %}
 					<p><a href="/{{l.replay}}"> Replay </a> </p>
 				{% endif %}
-				</td>
+				</div>
 				{% if count is divisibleby 3 %}
-					</tr><tr>
+					</div><div class="gridrow">
 				{% endif %}
 				{% set count = count + 1 %}
 			{% endfor %}
 		</tr>
-	</tbody>
-	</table>
+
 	{% if limit > -1 %}
 		<h5>Showing last {{ matches|length }} matches -- <a href="/match?limit=-1">show all</a></h5>
 	{% endif %}

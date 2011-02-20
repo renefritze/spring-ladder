@@ -3,17 +3,14 @@
 {% block content %}
 
 {% set count = 1 %}
-<div id='ladderlist'>
-	<table>
-	<tbody>
-		<tr>
+<div id='grid'>
+		<div class="gridrow">
 			{% for l in ladders %}
 				{% if loop.index is even %}
-					<td class="evengridcell">
+					<div class="gridcell evengridcell">
 				{% else %}
-					<td class="unevengridcell">
-				{% endif %}
-					<h3><a href="/ladder?id={{ l.id }}">{{ l.name }}</a>
+					<div class="gridcell unevengridcell">
+				{% endif %}					<h3><a href="/ladder?id={{ l.id }}">{{ l.name }}</a>
 						{% if l.description %} - {{l.description}} {% endif %}
 					</h3>
 					<div>
@@ -39,20 +36,22 @@
 							</table>
 						{% endif %}
 					</div>
-					{% if l.last_match %}
-						<div>
+					
+					<div>
+						{% if l.last_match %}
 							<h4>Most recent match:</h4>
-								{% if l.last_match.mapname %}
-									{{l.last_match.mapname}}
-									<br/>
-								{% endif %}
-								<a href="/match?id={{l.last_match.id}}">{{l.last_match.date}}</a>
-						</div>
-					{% endif %}
+							{% if l.last_match.mapname %}
+								{{l.last_match.mapname}}
+								<br/>
+							{% endif %}
+							<a href="/match?id={{l.last_match.id}}">{{l.last_match.date}}</a>
+						{% endif %}
+					</div>
+					
 				<!--		<a href="/admin/change_ladder.py?id={{ l.id }}">edit</a>-->
-				</td>
+				</div>
 				{% if count is divisibleby 3 %}
-					</tr><tr>
+					</div><div class="gridrow">
 				{% endif %}
 				{% set count = count + 1 %}
 			{% endfor %}

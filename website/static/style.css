@@ -263,64 +263,11 @@ a:active.nav.last{
     font-size:1.25em; 
 }
 
-#ladderlist td {
-	width: 33%;
-	vertical-align: top;
-	padding-left:2%;
-	padding-right:2%;
-	padding-bottom:2%;
-}
 #ladderview td{
 	vertical-align: top;
 	padding-left:2%;
 	padding-right:2%;
 	padding-bottom:2%;
-}
-
-#ladderlist h4 {
-	margin-bottom:0.3em;
-}
-
-#ladderlist h3 {
-	font-weight: bold;
-	font-size: 1.5em;
-}
-
-#matchgrid h3 {
-	font-weight: bold;
-	font-size: 1.5em;
-	margin-bottom:0.1em;
-}
-
-#ladderlist ol {
-	margin-bottom:0.1em;
-	margin-top:0.1em;
-	padding-top:0px;
-}
-
-#ladderlist table {
-	width: 100%;
-	margin-top: 0px;
-}
-
-#matchgrid td {
-	width: 33%;
-	vertical-align: top;
-	padding-left:2%;
-	padding-right:2%;
-	padding-bottom:2%;
-}
-
-.seperated_cells {
-	border-spacing: 5px;
-}
-
-#matchgrid h5 {
-	text-align: center;
-}
-#matchgrid table {
-	width: 100%;
-	margin-top: 0px;
 }
 
 .padded td{
@@ -386,6 +333,32 @@ a:active.nav.last{
 .invalid_field_errors {
 	color: #f00;
 	font-family: monospace;
+}
+
+#grid {clear:both;width:95%;margin-left: auto;	margin-right: auto;}
+#grid h5 {	text-align: center;}
+#grid h3 {
+	font-weight: bold;
+	font-size: 1.5em;
+	margin-bottom:0.1em;
+}
+
+.gridrow { float: left; margin: 5px 0px 5px 0px;}
+.gridcell { width:230px;float: left;
+	padding:0px 10px 10px 10px;
+	margin: 0px 5px 0px 5px;
+/* 	min-height:200px; */
+	height: 18em;
+} 
+#grid h4 {
+	margin-bottom:0.3em;
+}
+
+
+#ladderlist ol {
+	margin-bottom:0.1em;
+	margin-top:0.1em;
+	padding-top:0px;
 }
 
 /*---------------------pagination-----------------------------*/
