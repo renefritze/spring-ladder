@@ -2,6 +2,7 @@ body
 {
 	background-color: #DBDBDB;
 	margin:0px;
+	font-size:85%;
 }
 
 #all {
@@ -347,8 +348,7 @@ a:active.nav.last{
 .gridcell { width:230px;float: left;
 	padding:0px 10px 10px 10px;
 	margin: 0px 5px 0px 5px;
-/* 	min-height:200px; */
-	height: 18em;
+	min-height: 12em;
 } 
 #grid h4 {
 	margin-bottom:0.3em;
