@@ -217,20 +217,20 @@ a:active.nav.last{
 	margin-top: -10px;
 }
 
-#index_block_content {
+.index_block_content {
 	padding-left: 0px;
 	padding-right: 0px;
 	text-align: center;
 	font-size: 80%;
 }
 
-#index_block_content ul li {
+.index_block_content ul li {
  	margin-left: -40px;
 	padding: 2px 2px;
 	list-style: none;
 	list-style-position:inside;
 }
-#index_block_content h1 {
+.index_block_content h1 {
 	margin-bottom: 0;
 }
 
