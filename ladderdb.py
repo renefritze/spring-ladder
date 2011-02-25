@@ -36,7 +36,7 @@ class DbConnectionLostException( Exception ):
 
 class LadderDB:
 	def Connect(self):
-		self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_size=10, max_overflow=20)
+		self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_size=10, max_overflow=20, pool_recycle=1800)
 		self.metadata = Base.metadata
 		self.metadata.bind = self.engine
 		self.metadata.create_all(self.engine)
