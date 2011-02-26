@@ -12,6 +12,9 @@ def static_file(filename):
 @route('/images/:filename')
 def image_file(filename):
 	return send_file( filename, root=os.getcwd()+'/images/' )
+@route('/images/plots/:filename')
+def image_file2(filename):
+	return send_file( filename, root=os.getcwd()+'/images/plots/' )
 	
 @route('/demos/:filename')
 def demos(filename):
