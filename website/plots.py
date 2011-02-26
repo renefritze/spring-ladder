@@ -7,7 +7,8 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from db_entities import Match,Player,Result
 
-
+from threading import Lock
+mutex = Lock()
 
 @cache.cache('matches_per_ladder',expire=3600)
 def matches_per_ladder( ladderid ):
@@ -23,12 +24,14 @@ def matches_per_ladder( ladderid ):
 		data.append( s.query( Match.id ).filter( Match.ladder_id == ladderid).filter( Match.date < now + inc ).filter( Match.date >= now ).count() )
 		i += 1
 		now += inc
-	plt.plot(range(len(data)),data)
-	plt.ylabel('matches per day')
-	plt.xlabel('days past')
 	fn = 'images/plots/ladder_matches_%i.png'%int(ladderid)
-	plt.savefig(config['base_dir']+fn,transparent=True)
-
+	with mutex:
+		f = plt.figure(1)
+		plt.plot(range(len(data)),data)
+		plt.ylabel('matches per day')
+		plt.xlabel('days past')
+		plt.savefig(config['base_dir']+fn,transparent=True)
+		plt.close(1)
 	s.close()
 	return config['base_url'] + fn
 	
@@ -46,11 +49,13 @@ def matches_per_player( playerid ):
 		data.append( s.query( Result.id ).filter( Result.player_id == playerid).filter( Result.date < now + inc ).filter( Result.date >= now ).count() )
 		i += 1
 		now += inc
-	plt.plot(range(len(data)),data)
-	plt.ylabel('matches per day')
-	plt.xlabel('days past')
 	fn = 'images/plots/player_matches_%i.png'%int(playerid)
-	plt.savefig(config['base_dir']+fn,transparent=True)
-
+	with mutex:
+		f = plt.figure(1)
+		plt.plot(range(len(data)),data)
+		plt.ylabel('matches per day')
+		plt.xlabel('days past')
+		plt.savefig(config['base_dir']+fn,transparent=True)
+		plt.close(1)
 	s.close()
 	return config['base_url'] + fn
