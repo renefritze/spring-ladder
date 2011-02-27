@@ -21,7 +21,7 @@ def get_items(query):
 
 @route('/feeds/matches/:ladder_id')
 def matches_rss(ladder_id):
-	@cache.cache('get_rss_out', expire=300)
+	@cache.cache('get_rss_out_matches_single_ladder', expire=300)
 	def get_rss_out(l_id):
 		print 'not cached: get_rss_out(%s)'%str(l_id)
 		try:
@@ -39,6 +39,43 @@ def matches_rss(ladder_id):
 				description = "DESCRIPTION",
 				lastBuildDate = datetime.datetime.now(),
 				items = items )
+			output = cStringIO.StringIO()
+			rss.write_xml(output)
+			return output.getvalue()
+		
+		except Exception, m:
+			if s:
+				s.close()
+			return str(m)
+			
+	return get_rss_out(ladder_id)
+	
+from ranking import GlobalRankingAlgoSelector
+
+@route('/feeds/scores/:ladder_id')
+def scores_rss(ladder_id):
+	@cache.cache('get_rss_out_scores_single_ladder', expire=300)
+	def get_rss_out(l_id):
+		print 'not cached: get_rss_out(%s)'%str(l_id)
+		try:
+			base_url = config['base_url']
+			s = db.sessionmaker()			
+			lad = db.GetLadder( ladder_id )
+			rank_table = GlobalRankingAlgoSelector.GetWebRepresentation( db.GetRanks( ladder_id ), db )
+			#template = env.get_template('scoreboard.html')
+			template = env.get_template('rss_scoreboard.html')
+			desc = template.render( rank_table=rank_table, ladder=lad )
+			url = '%sscoreboard?id=%s'%(base_url,ladder_id)
+			#$postdate = date("Y-m-d H:i", $row['topic_time']);
+			title = "%s -- updated scoreboard"%lad.name
+			
+			item = PyRSS2Gen.RSSItem( title = title, link=url, guid = PyRSS2Gen.Guid( url ), pubDate=datetime.datetime.now(), description = desc )
+			rss = PyRSS2Gen.RSS2(
+				title = "%s -- Scoreboard"%lad.name,
+				link = "%sfeeds/scores/%s"%(base_url,l_id),
+				description = "DESCRIPTION",
+				lastBuildDate = datetime.datetime.now(),
+				items = [item] )
 			output = cStringIO.StringIO()
 			rss.write_xml(output)
 			return output.getvalue()
