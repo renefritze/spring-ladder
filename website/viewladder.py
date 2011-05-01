@@ -7,6 +7,7 @@ from db_entities import Ladder, Match, Result
 from ranking import GlobalRankingAlgoSelector
 from bottle import route,request
 from globe import db,env
+import plots
 
 @route('/ladder')
 def output( ):
@@ -46,6 +47,7 @@ def output( ):
 			return template.render(ladders=ladder_list )
 		else:
 			ladder = db.GetLadder( id )
+			plot_url = plots.matches_per_ladder( id )
 			template = env.get_template('viewladder.html')
 			limit = 10
 			try:
@@ -56,7 +58,7 @@ def output( ):
 			matches = s.query( Match ).filter( Match.ladder_id == id ).order_by(Match.date.desc())[:limit]
 			
 			s.close()
-			return template.render(ladder=ladder, rank_table=rank_table, matches=matches )
+			return template.render(ladder=ladder, rank_table=rank_table, matches=matches, plot_url=plot_url )
 
 	except ElementNotFoundException, e:
 		err_msg="ladder with id %s not found"%(str(id))

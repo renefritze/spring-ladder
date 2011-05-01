@@ -1,8 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
-<html>
-<head> 
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head profile="http://www.w3.org/2005/10/profile">
 	<title>SpringLadder</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<link rel="stylesheet" href="/static/style.css" >
+	<link rel="icon" type="image/ico" href="/images/favicon.ico" />
 	{% block head %}{% endblock %}
 </head>
 <body>
@@ -13,20 +15,22 @@
 			</div>
 		</div>
 
-		<div id="menu_top">
-			<ul>
-				<li class='first'><a class="nav" href="/">Home</a></li>
-				<li><a class="nav" href="/ladder">Ladders</a></li>
-				<li><a href="/match">Matches</a></li>
-				<li><a href="/player">Players</a></li>
-				<li><a href="/fame">Hall Of Fame</a></li>
-				<li><a href="/admin">Admin</a></li>
-				<li><a href="/help">Help</a></li>
-			</ul>
+		<div id="links">
+				<a class="nav" href="/">Home</a>
+				<a class="nav" href="/ladder">Ladders</a>
+				<a class="nav" href="/match">Matches</a>
+				<a class="nav" href="/player">Players</a>
+				<a class="nav" href="/fame">Hall Of Fame</a>
+				<a class="nav" href="/admin">Admin</a>
+				<a class="nav last" href="/help">Help</a>
 		</div>
 
-		<div id="content">
-				{% block content %}{% endblock %}
+		<div id="container">
+			<div id="main">
+				<div id="content">
+					{% block content %}{% endblock %}
+				</div>
+			</div>
 		</div>
 
 		<div id="footer">

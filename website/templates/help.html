@@ -1,31 +1,58 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script type="text/javascript" src="/static/jquery.js"></script>  
+<script type="text/javascript" src="/static/jquery.cookie.js"></script>
+<script type="text/javascript" src="/static/jquery.collapsible.min.js"></script>  
+<script type="text/javascript">
+  $(document).ready(function() {
+    //collapsible management
+    $('.collapsible').collapsible({
+      defaultOpen: 'user'
+    });
+  });
+</script>
 <div id='help'>
-	<h1>Controlling LadderBot via the lobby interface</h3>
-	<h2>User commands</h2>
-		<ul>
+	<h1>Controlling LadderBot via the lobby interface</h1>
+	<h3 class="collapsible" id="user"><span></span>User commands</h3>
+	<div class="collapsible_container">
+		<div class="collapsible_content">
+		<ul >
 			{% for h in user_commands %}
 				<li> <p class='command'>{{h[0]}}</p>{{h[1]}} </li>
 			{% endfor %}
 		</ul>
-	<h2>Ladderadmin commands</h2>
+		</div>
+	</div>
+	<h3 class="collapsible" id="ladmin"><span></span>Ladderadmin commands</h3>
+	<div class="collapsible_container">
+		<div class="collapsible_content">
 		<ul>
 			{% for h in ladder_admin_commands %}
 				<li> <p class='command'>{{h[0]}}</p>{{h[1]}} </li>
 			{% endfor %}
 		</ul>
-	<h2>Globaladmin commands</h2>
+		</div>
+	</div>
+	<h3 class="collapsible" id="gadmin"><span></span>Globaladmin commands</h3>
+	<div class="collapsible_container">
+		<div class="collapsible_content">
 		<ul>
 			{% for h in global_admin_commands %}
 				<li> <p class='command'>{{h[0]}}</p>{{h[1]}} </li>
 			{% endfor %}
 		</ul>
-	<h2>Battleroom commands</h2>
-			<ul>
+		</div>
+	</div>
+	<h3 class="collapsible" id="broom"><span></span>Battleroom commands</h3>
+	<div class="collapsible_container">
+		<div class="collapsible_content">
+		<ul>
 			{% for h in battleroom_commands %}
 				<li> <p class='command'>{{h[0]}}</p>{{h[1]}} </li>
 			{% endfor %}
 		</ul>
-</div>
+		</div>
+	</div>
+
 {% endblock %}

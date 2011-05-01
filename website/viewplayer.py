@@ -7,6 +7,7 @@ from ladderdb import ElementNotFoundException, EmptyRankingListException
 from db_entities import Player, Result
 from bottle import route,request
 from globe import db,env
+import plots
 
 @route('/player')
 def output( ):
@@ -25,13 +26,12 @@ def output( ):
 				played[ladder.id] = s.query( Result.id ).filter( Result.ladder_id == ladder.id ).filter( Result.player_id == player.id ).count()
 
 			results = s.query( Result ).filter( Result.player_id == player.id).order_by(Result.date.desc())[0:5]
-			matches = []
-			for r in results:
-				matches.append( r.match )
+			matches = [ r.match for r in results ]
+			plot_url = plots.matches_per_player( player.id )
 
 			template = env.get_template('viewplayer.html')
 			s.close()
-			return template.render(player=player,ladders=ladders, positions=positions,played=played,matches=matches )
+			return template.render(player=player,ladders=ladders, positions=positions,played=played,matches=matches,plot_url =plot_url  )
 		else:
 			asc = getSingleField( 'asc', request, 'False' )
 			if not asc:

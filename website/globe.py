@@ -5,7 +5,7 @@ import ParseConfig
 from ladderdb import LadderDB
 from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
-
+from disqus import Disqus
 cache_opts = {
     'cache.type': 'memory',
     'cache.data_dir': 'tmp/cache/data',
@@ -18,3 +18,4 @@ db = LadderDB(config['alchemy-uri'])
 env = Environment(loader=FileSystemLoader('templates'))
 staging = 'staging' in config.keys()
 cache = CacheManager(**parse_cache_config_options(cache_opts))
+discus = Disqus(config,cache)

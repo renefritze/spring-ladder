@@ -4,14 +4,14 @@ from formalchemy import Field, types
 from ladderdb import *
 from fieldsets import getSingleField, MatchInfoToTableAdapter
 from bottle import route,request
-from globe import db,env
+from globe import db,env,config,discus
 
 @route('/match')
 def output( ):
 	id = getSingleField( 'id', request )
 	player_name = getSingleField( 'player', request )
 	ladder_id = getSingleField( 'ladder', request )
-	limit = getSingleField( 'limit', request, 18 )
+	limit = int(getSingleField( 'limit', request, 18 ))
 	ret = ''
 	try:
 		s = db.sessionmaker()
@@ -39,13 +39,17 @@ def output( ):
 			ret = template.render(matches=matches, header=header_string )
 		elif not id:
 			template = env.get_template('viewmatchgrid.html')
-			matches = s.query( Match ).order_by(Match.date.desc())[:limit]
-			ret = template.render( matches=matches, limit=limit )
+			if limit > -1:
+				matches = s.query( Match ).order_by(Match.date.desc()).limit(limit).all()
+			else:
+				matches = s.query( Match ).order_by(Match.date.desc()).all()
+			discus_matches = discus.matchdict()
+			ret = template.render( matches=matches, limit=limit,discus_matches=discus_matches )
 		else:
 			match = s.query( Match ).options(eagerload('settings')).filter(Match.id == id ).first()
 			template = env.get_template('viewmatch.html')
 			opt_headers = ['key','val','wl/bl']
-			ret = template.render(ladder=match.ladder, matchinfo=MatchInfoToTableAdapter(match) )
+			ret = template.render(ladder=match.ladder, matchinfo=MatchInfoToTableAdapter(match),base_url=config['base_url'] )
 		s.close()
 		return ret
 		

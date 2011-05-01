@@ -1,24 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div id='index_block_center_wrapper'>
-	<div id='index_block_center'>
-		<div id='index_block_content'>
-			<h1>{{matches_header}}</h1>
-			(laddername)
-			<ul>
-			{% for l in matches %}
-			<li>
-				<a href="/match?id={{ l.id }}">{{l.date}}</a><br/>
-				(<a href="/ladder?id={{l.ladder.id}}">{{ l.ladder.name }}</a>)
-			</li>
-			{% endfor %}
-			</ul>
+	<div id='index_block_center_wrapper'>
+		<div id='index_block_center'>
+			<div class='index_block_content'>
+				<h1>{{matches_header}}</h1>
+				(laddername)
+				<ul>
+				{% for l in matches %}
+				<li>
+					<a href="/match?id={{ l.id }}">{{l.date}}</a><br/>
+					(<a href="/ladder?id={{l.ladder.id}}">{{ l.ladder.name }}</a>)
+				</li>
+				{% endfor %}
+				</ul>
+			</div>
 		</div>
 	</div>
-</div>
 	<div id='index_block_left'>
-		<div id='index_block_content'>
+		<div class='index_block_content'>
 			<h1>{{ladders_header}}</h1>
 			(matches played)
 			<ul>
@@ -33,7 +33,7 @@
 	</div>
 
 	<div id='index_block_right'>
-		<div id='index_block_content'>
+		<div class='index_block_content'>
 			<h1>{{players_header}}</h1>
 			(matches played)
 			<ul>

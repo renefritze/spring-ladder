@@ -2,15 +2,13 @@
 
 {% block content %}
 {% set count = 1 %}
-<div id='matchgrid'>
-	<table>
-	<tbody>
-		<tr>
+<div id='grid'>
+		<div class="gridrow">
 			{% for l in matches %}
 				{% if loop.index is even %}
-					<td>
+					<div class="gridcell evengridcell">
 				{% else %}
-					<td class="unevengridcell">
+					<div class="gridcell unevengridcell">
 				{% endif %}
 					<h3>
 						<!--<a href="/viewmatch.py?id={{ l.id }}">Match #{{ l.id }}</a>
@@ -28,19 +26,23 @@
 					</div>
 				<p>Duration: {{l.duration}}</p>
 				<p>Played on {{l.date}}</p>
-				{% if l.replay %}
-					<p><a href="/{{l.replay}}"> Replay </a> </p>
-				{% endif %}
-				</td>
+				<p>
+					{% if l.replay %}
+						<a href="/{{l.replay}}">Replay</a> &nbsp;
+					{% endif %}
+					{% if discus_matches[l.id] is defined %}
+						<a href="/match?id={{l.id}}#disqus_thread">{{ discus_matches[l.id] }} comment{% if discus_matches[l.id] > 1 %}s{% endif %}</a>
+					{% endif %}
+				</p>
+				</div>
 				{% if count is divisibleby 3 %}
-					</tr><tr>
+					</div><div class="gridrow">
 				{% endif %}
 				{% set count = count + 1 %}
 			{% endfor %}
 		</tr>
-	</tbody>
-	</table>
-	{% if limit > 0 %}
+
+	{% if limit > -1 %}
 		<h5>Showing last {{ matches|length }} matches -- <a href="/match?limit=-1">show all</a></h5>
 	{% endif %}
 </div>
