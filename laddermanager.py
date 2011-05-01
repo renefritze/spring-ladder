@@ -31,12 +31,15 @@ def saychannel( socket, channel, message ):
 			mInfo( "Channel :%s, Message: %s" %(channel,line) )
 			socket.send("SAY %s %s\n" %(channel,line) )
 
-class Main:
-	botpid = dict() # slot -> bot pid
-	botstatus = [] # slot -> bot already spawned
-	battleswithbots = [] # battle id -> bot already in
-	ladderlist = dict() # id -> ladder name
-	ladderoptions = dict() # id -> ladder options
+from tasbot.Plugin import IPlugin
+class Main(IPlugin):
+	def __init__(self,name,tasc):
+		IPlugin.__init__(self,name,tasc)
+		self.botpid = dict() # slot -> bot pid
+		self.botstatus = [] # slot -> bot already spawned
+		self.battleswithbots = [] # battle id -> bot already in
+		self.ladderlist = dict() # id -> ladder name
+		self.ladderoptions = dict() # id -> ladder options
 
 	def botthread(self,slot,battleid,battlepassword,fromwho,ladderid):
 		nick = self.app.config["nick"]+str(slot)
