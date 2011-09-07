@@ -1,18 +1,32 @@
 # -*- coding: utf-8 -*-
-from customlog import *
-from ParseConfig import *
-import commands, thread, signal, os, time, subprocess, traceback, platform, sys
-import replay_upload
-from db_entities import *
-from ladderdb import *
-from match import *
-from ranking import GlobalRankingAlgoSelector
+
+import commands
+import thread
+import signal
+import os
+import time
+import subprocess
+import traceback
+import platform
+import sys
 import random
 if platform.system() == "Windows":
 	import win32api
 
-from utilities import *
+from tasbot.utilities import *
+from tasbot.customlog import Log
+from tasbot.plugin import IPlugin
 
+from db_entities import *
+from ladderdb import *
+from match import *
+from ranking import GlobalRankingAlgoSelector
+import replay_upload
+from tasbot.config import Config
+import helpstrings
+
+
+helpstring_user = helpstrings.helpstring_user_slave
 bstr_nonneg = lambda n: n>0 and bstr_nonneg(n>>1).lstrip('0')+str(n&1) or '0'
 
 """
@@ -41,8 +55,6 @@ class BattleStatus:
 	def __str__(self):
 		return "nick: %s -- team:%d ally:%d side:%d spec:%d decimal:%d"%(self.nick,self.team,self.ally,self.side,self.spec,self.decimal)
 
-import helpstrings
-helpstring_user = helpstrings.helpstring_user_slave
 
 def sendstatus(self, socket ):
 	if self.ingame:
@@ -50,40 +62,45 @@ def sendstatus(self, socket ):
 	else:
 		socket.send("MYSTATUS 0\n")
 
-class Main:
-	sock = 0
-	battleowner = ""
-	battleid = -1
-	script = ""
-	ingame = False
-	gamestarted = False
-	joinedbattle = False
-	toshutdown = False
-	scriptpassword = ""
-	ladderid = -1
-	if platform.system() == "Windows":
-		scriptbasepath = os.environ['USERPROFILE']
-	else:
-		scriptbasepath = os.environ['HOME']
-	battleusers = dict()
-	battleoptions = dict()
-	ladderlist = dict()
-	battle_statusmap = dict()
-	teams = dict()
-	allies = dict()
-	bots = dict()
-	disabledunits = dict()
-	battlefounder = ""
-	hostip = ""
-	nick = self.app.config["nick"]
-	hostport = 0
+
+class Main(IPlugin):
+	def __init__(self,name,tasc):
+		IPlugin.__init__(self,name,tasc)
+		self.sock = 0
+		self.app = tasc.main
+		self.battleowner = ""
+		self.battleid = -1
+		self.script = ""
+		self.ingame = False
+		self.gamestarted = False
+		self.joinedbattle = False
+		self.toshutdown = False
+		self.scriptpassword = ""
+		self.ladderid = -1
+		if platform.system() == "Windows":
+			self.scriptbasepath = os.environ['USERPROFILE']
+		else:
+			self.scriptbasepath = os.environ['HOME']
+		self.battleusers = dict()
+		self.battleoptions = dict()
+		self.ladderlist = dict()
+		self.battle_statusmap = dict()
+		self.teams = dict()
+		self.allies = dict()
+		self.bots = dict()
+		self.disabledunits = dict()
+		self.battlefounder = ""
+		self.hostip = ""
+		self.nick = self.app.config.get('tasbot', 'nick')
+		self.hostport = 0
+
 	def startspring(self,socket,g):
 		currentworkingdir = os.getcwd()
 		try:
 			players = []
 			for player in self.battle_statusmap:
 				status = self.battle_statusmap[player]
-				if not status.spec and player != self.app.config["nick"]:
+				if not status.spec and player != self.app.config.get('tasbot', 'nick'):
 					players.append(player)
 			pregame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
 
@@ -99,13 +116,14 @@ class Main:
 				self.saybattleex(socket, self.battleid, "won't submit the result to the ladder")
 			sendstatus( self, socket )
 			st = time.time()
-			self.log.Info("*** Starting spring: command line \"%s %s\"" % (self.app.config["springdedclientpath"], os.path.join(self.scriptbasepath,"%f.txt" % g )) )
+			self.log.info("*** Starting spring: command line \"%s %s\"" % (self.app.config.get('tasbot', "springdedclientpath"), os.path.join(self.scriptbasepath,"%f.txt" % g )) )
 			if platform.system() == "Windows":
-				dedpath = "\\".join(self.app.config["springdedclientpath"].replace("/","\\").split("\\")[:self.app.config["springdedclientpath"].replace("/","\\").count("\\")])
+				#GOOD LORD BD, this is horrible
+				dedpath = "\\".join(self.app.config.get('tasbot', "springdedclientpath").replace("/","\\").split("\\")[:self.app.config.get('tasbot', "springdedclientpath").replace("/","\\").count("\\")])
 				if not dedpath in sys.path:
 					sys.path.append(dedpath)
-			if "springdatapath" in self.app.config:
-				springdatapath = self.app.config["springdatapath"]
+			if self.app.config.has_option('tasbot', "springdatapath"):
+				springdatapath = self.app.config.get('tasbot', "springdatapath")
 				if not springdatapath in sys.path:
 					sys.path.append(springdatapath)
 				os.chdir(springdatapath)
@@ -113,7 +131,7 @@ class Main:
 				springdatapath = None
 			if springdatapath!= None:
 				os.environ['SPRING_DATADIR'] = springdatapath
-			self.pr = subprocess.Popen((self.app.config["springdedclientpath"],os.path.join(self.scriptbasepath,"%f.txt" % g )),stdout=subprocess.PIPE,stderr=subprocess.STDOUT,cwd=springdatapath)
+			self.pr = subprocess.Popen((self.app.config.get('tasbot', "springdedclientpath"),os.path.join(self.scriptbasepath,"%f.txt" % g )),stdout=subprocess.PIPE,stderr=subprocess.STDOUT,cwd=springdatapath)
 			l = self.pr.stdout.readline()
 			while len(l) > 0:
 				self.output += l
@@ -122,8 +140,8 @@ class Main:
 			et = time.time()
 			if status != 0:
 				self.saybattle( self.socket,self.battleid,"Error: Spring exited with status %i" % status)
-				self.log.Error( "Error: Spring exited with status %i" % status )
-				self.log.Error( self.output )
+				self.log.error( "Error: Spring exited with status %i" % status )
+				self.log.error( self.output )
 			if doSubmit:
 				matchid = -1
 				try:
@@ -133,9 +151,10 @@ class Main:
 					news_string = '\n'.join( self.GetRankInfoDifference( pregame_rankinfo, postgame_rankinfo ) )
 					#self.saybattle( self.socket, self.battleid, news_string )
 					self.saybattleex(self.socket, self.battleid, "has submitted the score update to the ladder: http://ladder.springrts.com/viewmatch.py?id=%d"%matchid)
-				except:
+				except Exception, e:
 					exc = traceback.format_exception(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2])
-					self.log.Error( 'EXCEPTION: BEGIN\n%s\nEXCEPTION: END\nCLIENTLOG: BEGIN\n%s\nCLIENTLOG: END'%(exc,self.output) )
+					self.log.error(self.output)
+					self.log.exception(e)
 					self.saybattleex(self.socket, self.battleid, "could not submit ladder score updates")
 				if matchid != -1:
 					reply = replay_upload.postReplay( os.getcwd() + "/"+ self.db.GetMatchReplay( matchid ), 'LadderBot', "Ladder: %s, Match #%d" % ( self.db.GetLadderName(self.ladderid), matchid ) )
@@ -145,12 +164,11 @@ class Main:
 					else:
 						self.saybattleex(self.socket, self.battleid, "error uploading replay to http://replays.adune.nl")
 
-		except:
-			exc = traceback.format_exception(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2])
-			self.log.Error( 'EXCEPTION: BEGIN\n%s\nEXCEPTION: END'%exc )
+		except Exception, k:
+			self.log.exception(k)
 		try:
 			os.remove(os.path.join(self.scriptbasepath,"%f.txt" % g))
-		except:
+		except Exception:
 			pass
 		os.chdir(currentworkingdir)
 		self.ingame = False
@@ -311,7 +329,7 @@ class Main:
 			self.script += "\n\tHostIP=" + self.hostip + ";"
 			self.script += "\n\tHostPort=" + self.hostport + ";"
 			self.script += "\n\tIsHost=0;"
-			self.script += "\n\tMyPlayerName=" + self.app.config["nick"] + ";"
+			self.script += "\n\tMyPlayerName=" + self.app.config.get('tasbot', 'nick') + ";"
 			if len(self.scriptpassword) > 0:
 				self.script += "\n\tMyPasswd=" + self.scriptpassword + ";"
 			self.script += "\n}"
@@ -323,32 +341,32 @@ class Main:
 		self.app = tasc.main
 		self.tsc = tasc
 		self.hosttime = time.time()
-		self.battleid = int(self.app.config["battleid"])
-		self.ladderid = int(self.app.config["ladderid"])
-		self.battlepassword = self.app.config["battlepassword"]
+		self.battleid = int(self.app.config.get('ladder', "battleid"))
+		self.ladderid = int(self.app.config.get('ladder', "ladderid"))
+		self.battlepassword = self.app.config.get('ladder', "battlepassword")
 		self.log = CLog()
-		self.log.Init( self.app.config['nick']+'.log', self.app.config['nick']+'.err' )
-		self.db = LadderDB( parselist(self.app.config["alchemy-uri"],",")[0], [], parselist(self.app.config["alchemy-verbose"],",")[0] )
+		self.log.init( self.app.config.get('tasbot', 'nick')+'.log', 'info' )
+		self.db = LadderDB( self.app.config.get('tasbot', "alchemy-uri"), [], int(self.app.config.get('tasbot', "alchemy-verbose" )))
 
 	def oncommandfromserver(self,command,args,s):
 		#print "From server: %s | Args : %s" % (command,str(args))
 		self.socket = s
 		if command == "JOINBATTLE":
 			self.joinedbattle = True
-			good( "Joined battle: " + str(self.battleid) )
+			self.log.good("Joined battle: " + str(self.battleid) )
 		if command == "JOINBATTLEFAILED":
 			self.joinedbattle = False
-			bad( "Join battle failed, ID: " + str(self.battleid) + " reason: " + " ".join(args[0:] ) )
+			self.log.bad("Join battle failed, ID: " + str(self.battleid) + " reason: " + " ".join(args[0:] ) )
 			self.KillBot()
 		if command == "FORCEQUITBATTLE":
 			self.joinedbattle = False
-			bad( "Kicked from battle: " + str(self.battleid) )
+			self.log.bad("Kicked from battle: " + str(self.battleid) )
 			self.toshutdown = True
 			if not self.ingame:
 				self.KillBot()
 		if command == "BATTLECLOSED" and len(args) == 1 and int(args[0]) == self.battleid:
 			self.joinedbattle = False
-			notice( "Battle closed: " + str(self.battleid) )
+			self.log.info("Battle closed: " + str(self.battleid) )
 			self.toshutdown = True
 			if not self.ingame:
 				self.KillBot()
@@ -395,7 +413,7 @@ class Main:
 			try:
 				if self.battle_statusmap[who].spec and who != self.battlefounder and not self.db.AccessCheck( -1, who, Roles.LadderAdmin ):
 					return
-			except:
+			except Exception:
 				pass
 
 			if command == "!ladderchecksetup":
@@ -433,7 +451,7 @@ class Main:
 					self.saybattle( self.socket, self.battleid,"Invalid command syntax, check !ladderhelp for usage.")
 			if command == "!ladderleave":
 				self.joinedbattle = False
-				good( "Leaving battle: " + str(self.battleid) )
+				self.log.good("Leaving battle: " + str(self.battleid) )
 				self.socket.send("LEAVEBATTLE\n")
 				self.toshutdown = True
 				if not self.ingame:
@@ -540,7 +558,7 @@ class Main:
 						allies_map = dict()
 						for player in self.battle_statusmap:
 							status = self.battle_statusmap[player]
-							if not status.spec and player != self.app.config["nick"]:
+							if not status.spec and player != self.app.config.get('', 'nick'):
 								players.append(player)
 								teams_map[player] = status.team
 								allies_map[player] = status.ally
@@ -550,14 +568,14 @@ class Main:
 							self.saybattleex(self.socket, self.battleid, "has submitted ladder score updates")
 						except BannedPlayersDetectedException, b:
 							self.saybattle( self.socket,self.battleid,str(b) )
-							self.log.Error( b, 'BannedPlayersDetectedException' )
+							self.log.error( b, 'BannedPlayersDetectedException' )
 						except Exception, e:
 							self.saybattle( self.socket,self.battleid,"There was an error reporting the battle outcome: %s"%str(e) )
-							self.log.Error( e, 'Exception' )
+							self.log.error( e, 'Exception' )
 
 					except ElementNotFoundException, e:
 						self.saybattle( self.socket,self.battleid, "Invalid ladder ID." )
-						self.log.Error( e, 'ElementNotFoundException' )
+						self.log.error( e, 'ElementNotFoundException' )
 			if command == "!ladderlistoptions":
 				if len(args) != 1 or not args[0].isdigit():
 					ladderid =  self.ladderid
@@ -629,7 +647,7 @@ class Main:
 				for user in userlist:
 					try:
 						userstatus = self.tsc.users[user]
-					except: # skip offline
+					except Exception: # skip offline
 						continue
 					if userstatus.ingame:
 						continue
@@ -725,12 +743,12 @@ class Main:
 
 	def saybattle(self,socket,battleid,message):
 		for line in message.split('\n'):
-			self.log.Info( "Battle:%i, Message: %s" %(battleid,line) )
+			self.log.info( "Battle:%i, Message: %s" %(battleid,line) )
 			socket.send("SAYBATTLE %s\n" % line)
 
 	def saybattleex(self,socket,battleid,message):
 		for line in message.split('\n'):
-			self.log.Info( "Battle:%i, Message: %s" %(battleid,line) )
+			self.log.info( "Battle:%i, Message: %s" %(battleid,line) )
 			socket.send("SAYBATTLEEX %s\n" % line)
 
 	def sayPermissionDenied(self,socket, command, username ):

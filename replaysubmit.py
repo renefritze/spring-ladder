@@ -32,10 +32,10 @@ class ReplayReporter:
 			output = ""
 			doSubmit = ladderid != -1 and db.LadderExists( ladderid )
 			if not doSubmit:
-				Log.Error( red + "Error: ladder %d does not exist" % ( ladderid ) + normal, 'ReplayReporter' )
+				Log.error( red + "Error: ladder %d does not exist" % ( ladderid ) + normal, 'ReplayReporter' )
 				return False
 			st = time.time()
-			Log.Info( "*** Starting spring: command line \"%s %s\"" % (self.springdedclientpath, replaypath ), 'ReplayReporter' ) 
+			Log.info( "*** Starting spring: command line \"%s %s\"" % (self.springdedclientpath, replaypath ), 'ReplayReporter' ) 
 			if platform.system() == "Windows":
 				dedpath = "\\".join(self.springdedclientpath.replace("/","\\").split("\\")[:self.springdedclientpath.replace("/","\\").count("\\")])
 				if not dedpath in sys.path:
@@ -52,19 +52,19 @@ class ReplayReporter:
 				l = pr.stdout.readline()
 			status = pr.wait()
 			et = time.time()
-			Log.Info(  "*** Spring has exited with status %i" % status, 'ReplayReporter' )
+			Log.info(  "*** Spring has exited with status %i" % status, 'ReplayReporter' )
 			if status != 0:
-				Log.Error( output, 'ReplayReporter' )
+				Log.error( output, 'ReplayReporter' )
 			elif doSubmit:
 				mr = MatchToDbWrapper( output, ladderid )
 				try:
 					db.ReportMatch( mr )
-				except:
-					Log.Error( 'reporting match failed', 'ReplayReporter' )
+				except Exception:
+					Log.error( 'reporting match failed', 'ReplayReporter' )
 					return False
-		except:
+		except Exception:
 			exc = traceback.format_exception(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2])
-			Log.Error( "*** EXCEPTION: BEGIN\n%s\nEXCEPTION: END"%exc, 'ReplayReporter' )
+			Log.error( "*** EXCEPTION: BEGIN\n%s\nEXCEPTION: END"%exc, 'ReplayReporter' )
 			os.chdir(currentworkingdir)
 			return False
 		os.chdir(currentworkingdir)
