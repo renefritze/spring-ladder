@@ -20,9 +20,10 @@ if __name__=="__main__":
 	except Exception,e:
 		configfile = "Main.conf"
 	print('using configfile %s'%configfile)
-	
+
 	config = tasbot.config.Config(configfile)
-	Log.init( config.get('tasbot','logfile','ladderbotbot.log'), 'info', True )
+	Log.init(config.get('tasbot', 'logfile', 'ladderbot.log'),
+			 config.get('tasbot', 'loglevel', 'info'), True )
 	if slave:
 		pidfile = config.get('tasbot','pidfile','ladderbot.pid')
 	else:
@@ -33,4 +34,3 @@ if __name__=="__main__":
 		inst.run()#exec in fg
 	else:
 		inst.start()
-
