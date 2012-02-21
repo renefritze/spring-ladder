@@ -27,7 +27,7 @@ def output( ):
 			header_string = 'Matches on ladder %s'%(ladder.name)
 			template = env.get_template('viewmatchlist.html')
 			matches = s.query( Match ).filter(Match.ladder_id == ladder_id).order_by(Match.date.desc()).all()
-			ret = template.render(matches=matches, header=header_string )
+			ret = template.render(matches=matches, header=header_string,ladder=ladder )
 		elif player_name:
 			player = db.GetPlayer( player_name )
 			template = env.get_template('viewmatchlist.html')

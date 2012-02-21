@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from customlog import *
-from ParseConfig import *
 import commands, thread, os, sys, signal, traceback, subprocess, platform
-from db_entities import *
-from ladderdb import *
 if platform.system() == "Windows":
 	import win32api
+
+import tasbot
+from tasbot.customlog import *
+from tasbot.plugin import IPlugin
+from db_entities import *
+from ladderdb import *
 
 import helpstrings
 helpstring_ladder_admin = helpstrings.helpstring_ladder_admin_manager
@@ -13,10 +15,13 @@ helpstring_global_admin = helpstrings.helpstring_global_admin_manager
 helpstring_user = helpstrings.helpstring_user_manager
 
 def mError( msg ):
-	Log.Error( msg, '[LadderManager]' )
+	Log.error( msg, '[LadderManager]' )
 
+def notice( msg ):
+	Log.info( msg, '[LadderManager]' )
+	
 def mInfo( msg ):
-	Log.Info( msg, '[LadderManager]' )
+	Log.info( msg, '[LadderManager]' )
 
 def pm(s,p,m):
 	try:
@@ -31,10 +36,9 @@ def saychannel( socket, channel, message ):
 			mInfo( "Channel :%s, Message: %s" %(channel,line) )
 			socket.send("SAY %s %s\n" %(channel,line) )
 
-from tasbot.Plugin import IPlugin
 class Main(IPlugin):
-	def __init__(self,name,tasc):
-		IPlugin.__init__(self,name,tasc)
+	def __init__(self,name,tasclient):
+		IPlugin.__init__(self,name,tasclient)
 		self.botpid = dict() # slot -> bot pid
 		self.botstatus = [] # slot -> bot already spawned
 		self.battleswithbots = [] # battle id -> bot already in
@@ -42,29 +46,30 @@ class Main(IPlugin):
 		self.ladderoptions = dict() # id -> ladder options
 
 	def botthread(self,slot,battleid,battlepassword,fromwho,ladderid):
-		nick = self.app.config["nick"]+str(slot)
+		nick = self.app.config.get('tasbot',"nick")+str(slot)
 		try:
 			d = dict()
-			d.update([("serveraddr",self.app.config["serveraddr"])])
-			d.update([("serverport",self.app.config["serverport"])])
-			d.update([("admins",self.app.config["admins"])])
-			d.update([("nick",nick)])
-			d.update([("password",self.app.config["password"])])
-			d.update([("plugins","ladderslave")])
-			d.update( [ ( "bans", self.app.config["bans"] ) ] )
-			d.update([("battleid",str(battleid))])
-			d.update([("battlepassword",str(battlepassword))])
-			d.update([("ladderid",str(ladderid))])
-			d.update([("fromwho",fromwho)])
-			d.update([("alchemy-uri",self.app.config["alchemy-uri"])])
-			d.update([("alchemy-verbose",self.app.config["alchemy-verbose"])])
-			d.update([("springdedclientpath",self.app.config["springdedclientpath"])])
-			if "springdatapath" in self.app.config:
-				d.update([("springdatapath",self.app.config["springdatapath"])])
-			writeconfigfile(nick+".cfg",d)
-			p = subprocess.Popen(("python","Main.py","-c", "%s" % (nick+".cfg")),stdout=sys.stdout)
-			self.botpid[slot] = p.pid
-			p.wait()
+			#d.update([("serveraddr",self.app.config.get('tasbot',"serveraddr"])])
+			#d.update([("serverport",self.app.config.get('tasbot',"serverport"])])
+			#d.update([("admins",self.app.config.get('tasbot',"admins"])])
+			#d.update([("nick",nick)])
+			#d.update([("password",self.app.config.get('tasbot',"password"])])
+			#d.update([("plugins","ladderslave")])
+			#d.update( [ ( "bans", self.app.config.get('tasbot',"bans"] ) ] )
+			#d.update([("battleid",str(battleid))])
+			#d.update([("battlepassword",str(battlepassword))])
+			#d.update([("ladderid",str(ladderid))])
+			#d.update([("fromwho",fromwho)])
+			#d.update([("alchemy-uri",self.app.config.get('tasbot',"alchemy-uri"])])
+			#d.update([("alchemy-verbose",self.app.config.get('tasbot',"alchemy-verbose"])])
+			#d.update([("springdedclientpath",self.app.config.get('tasbot',"springdedclientpath"])])
+			#if "springdatapath" in self.app.config:
+				#d.update([("springdatapath",self.app.config.get('tasbot',"springdatapath"])])
+			#writeconfigfile(nick+".cfg",d)
+			#p = subprocess.Popen(("python","Main.py","-c", "%s" % (nick+".cfg")),stdout=sys.stdout)
+			#self.botpid[slot] = p.pid
+			#p.wait()
+			raise TypeError()
 		except:
 			mError(traceback.print_exc(file=sys.stdout))
 
@@ -72,9 +77,9 @@ class Main(IPlugin):
 		self.tsc = tasc
 		self.bans = []
 		self.app = tasc.main
-		self.channels = parselist(self.app.config["channelautojoinlist"],",")
-		self.admins = parselist(self.app.config["admins"],",")
-		self.db = LadderDB( parselist(self.app.config["alchemy-uri"],",")[0], self.admins, parselist(self.app.config["alchemy-verbose"],",")[0] )
+		self.channels = self.app.config.get_optionlist("join_channels","channels")
+		self.admins = self.app.config.get_optionlist("tasbot","admins")
+		self.db = LadderDB( self.app.config.get('tasbot',"alchemy-uri"), self.admins, self.app.config.get('tasbot',"alchemy-verbose"))
 		self.closewhenempty = False
 		self.enabled = True
 
@@ -96,12 +101,12 @@ class Main(IPlugin):
 		while busyslot:
 			slot = slot+1
 			busyslot = slot in self.botstatus
-		notice("spawning " + self.app.config["nick"]+str(slot) + " to join battle " + str(battleid) + " with ladder " + str(ladderid))
+		notice("spawning " + self.app.config.get('tasbot',"nick")+str(slot) + " to join battle " + str(battleid) + " with ladder " + str(ladderid))
 		self.threads.append(thread.start_new_thread(self.botthread,(slot,battleid,password,fromwho,ladderid)))
 
 	def oncommandfromuser(self,fromwho,fromwhere,ispm,command,args,socket):
 		try:
-			if fromwho == self.app.config["nick"]:
+			if fromwho == self.app.config.get('tasbot',"nick"):
 				return
 			if len(command) > 0 and command[0] == "!":
 				if not self.db.AccessCheck( -1, fromwho, Roles.User ):
@@ -156,7 +161,7 @@ class Main(IPlugin):
 					socket.send("JOIN " + channel + "\n")
 					if not channel in self.channels:
 						self.channels.append(channel)
-						self.app.config["channelautojoinlist"] = ','.join(self.channels)
+						self.app.config.set('join_channels',"channels", ','.join(self.channels))
 						self.app.SaveConfig()
 			if command == "!ladderleavechannel":
 				if not self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
@@ -170,7 +175,7 @@ class Main(IPlugin):
 					if channel in self.channels:
 						socket.send("LEAVE " + channel + "\n")
 						self.channels.remove(channel)
-						self.app.config["channelautojoinlist"] = ','.join(self.channels)
+						self.app.config.set('join_channels',"channels", ','.join(self.channels))
 						self.app.SaveConfig()
 			if command == "!ladderlist":
 				self.notifyuser( socket, fromwho, fromwhere, ispm, "Available ladders, format name: ID:" )
@@ -764,11 +769,11 @@ class Main(IPlugin):
 		if command == "FORCELEAVECHANNEL" and len(args) > 1:
 			if args[0] in self.channels:
 				self.channels.remove(args[0])
-				self.app.config["channelautojoinlist"] = ','.join(self.channels)
+				self.app.config.set('join_channels',"channels", ','.join(self.channels))
 				self.app.SaveConfig()
 		if command == "ADDUSER" and len(args) > 0:
 			name = args[0]
-			basebotname = self.app.config["nick"]
+			basebotname = self.app.config.get('tasbot',"nick")
 			if name.startswith(basebotname):
 				name = name[len(basebotname):] # truncate prefix
 				if name.isdigit():
@@ -785,7 +790,7 @@ class Main(IPlugin):
 					pass
 		if command == "REMOVEUSER" and len(args) > 0:
 			name = args[0]
-			basebotname = self.app.config["nick"]
+			basebotname = self.app.config.get('tasbot',"nick")
 			if name.startswith(basebotname):
 				name = name[len(basebotname):] # truncate prefix
 				if name.isdigit():
@@ -796,7 +801,7 @@ class Main(IPlugin):
 		if command == "JOINEDBATTLE" and len(args) > 1:
 			name = args[1]
 			battleid = int(args[0])
-			basebotname = self.app.config["nick"]
+			basebotname = self.app.config.get('tasbot',"nick")
 			if name.startswith(basebotname):
 				name = name[len(basebotname):] # truncate prefix
 				if name.isdigit():
@@ -807,7 +812,7 @@ class Main(IPlugin):
 		if command == "LEFTBATTLE" and len(args) > 1:
 			name = args[1]
 			battleid = int(args[0])
-			basebotname = self.app.config["nick"]
+			basebotname = self.app.config.get('tasbot',"nick")
 			if name.startswith(basebotname):
 				name = name[len(basebotname):] # truncate prefix
 				if name.isdigit():

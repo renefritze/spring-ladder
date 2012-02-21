@@ -3,7 +3,7 @@
 from db_entities import *
 from ranking import *
 import time, datetime, hashlib, traceback, sys
-from customlog import Log
+from tasbot.customlog import Log
 
 class InvalidOptionSetup( Exception ):
 	def __init__(self, gameid, ladderid):

@@ -50,6 +50,36 @@ def matches_rss(ladder_id):
 			
 	return get_rss_out(ladder_id)
 	
+@route('/feeds/matches')
+def all_matches_rss():
+	@cache.cache('all_get_rss_out_matches_single_ladder', expire=300)
+	def all_get_rss_out():
+		print 'not cached: all_get_rss_out()'
+		try:
+			base_url = config['base_url']
+			s = db.sessionmaker()
+			limit = 10
+			matches = s.query( Match )
+			items = get_items( matches )
+			if len(items) == 0:
+				return ""
+			rss = PyRSS2Gen.RSS2(
+				title = "SpringLadder -- Latest matches",
+				link = "%sfeeds/matches"%(base_url),
+				description = "DESCRIPTION",
+				lastBuildDate = datetime.datetime.now(),
+				items = items )
+			output = cStringIO.StringIO()
+			rss.write_xml(output)
+			return output.getvalue()
+		
+		except Exception, m:
+			if s:
+				s.close()
+			return str(m)
+			
+	return all_get_rss_out()	
+
 from ranking import GlobalRankingAlgoSelector
 
 @route('/feeds/scores/:ladder_id')

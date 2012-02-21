@@ -12,7 +12,7 @@
 	<table style='width:80%;'>
 		<tr>
 			<td style="width:50%;">
-				<h2>Top {{ rank_table.rows|length }} players</h2>
+				<h2>Top {{ rank_table.rows|length }} players <a href="/feeds/scores/{{ladder.id}}" ><img src="/images/rss_orange_transp_2.png" alt="RSS"> </a></h2>
 				<table class='padded'>
 					{% for row in rank_table.rows %}
 						<tr>
@@ -30,7 +30,7 @@
 				
 			</td>
 			<td style="width:50%;">
-				<h2>Last {{ matches|length }} matches</h2>
+				<h2>Last {{ matches|length }} matches <a href="/feeds/matches/{{ladder.id}}" ><img src="/images/rss_orange_transp_2.png" alt="RSS"> </a></h2>
 				<ul>
 					{% for l in matches %}
 						<li><a href="/match?id={{ l.id }}">({{l.date}})</a> </li>
@@ -43,7 +43,7 @@
 				<a href="/scoreboard?id={{ladder.id}}">full list</a>
 			</td>
 			<td>
-				<a href="/match?ladder={{ladder.id}}">all matches</a>
+				<a href="/match?ladder={{ladder.id}}">all matches</a>&nbsp;
 			</td>
 		</tr>
 	</table>

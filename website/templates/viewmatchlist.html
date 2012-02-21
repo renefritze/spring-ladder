@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block head %}
+	{% if ladder is defined %}
+		<link rel="alternate" type="application/rss+xml" href="/feeds/matches/{{ladder.id}}" title="{{ladder.name}} matches">
+	{% endif %}
+{% endblock %}
+
 {% block content %}
 {% if header %}
 <h1>{{header}}</h1>

@@ -13,7 +13,7 @@ cache_opts = {
 }
 
 config = ParseConfig.readconfigfile( 'Main.conf' )
-Log.Init( 'website.log', 'website.log' )
+Log.Init( 'website.log' )
 db = LadderDB(config['alchemy-uri'])
 env = Environment(loader=FileSystemLoader('templates'))
 staging = 'staging' in config.keys()
