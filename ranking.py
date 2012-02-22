@@ -1,18 +1,24 @@
 # -*- coding: utf-8 -*-
 
+try:
+	from sqlalchemy.exceptions import UnboundExecutionError
+except Exception:
+	from sqlalchemy.exc import UnboundExecutionError
+
 from db_entities import *
-from sqlalchemy.exceptions import UnboundExecutionError
+
 
 class RankingTable:
 	header 	= []
 	rows	= []
 
+
 class EmptyRankingListException( Exception ):
 	def __str__(self):
 		return "no ranks, doh"
 
-class IRanking():
 
+class IRanking():
 	def Update(self,ladder_id,match,db):
 		raise NotImplemented
 
@@ -30,6 +36,7 @@ class IRanking():
 
 	def OrderByKey(self):
 		raise NotImplemented
+
 
 class RankingAlgoSelector:
 	algos = dict()

@@ -3,8 +3,10 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
 from sqlalchemy import exc
-import traceback, datetime, math, hashlib
-import time
+import traceback
+import datetime
+import math
+import hashlib
 
 from tasbot.customlog import *
 
@@ -38,7 +40,10 @@ class DbConnectionLostException( Exception ):
 
 class LadderDB:
 	def Connect(self):
-		self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_size=10, max_overflow=20, pool_recycle=1800)
+		if self.alchemy_uri.startswith('mysql'):
+			self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_size=10, max_overflow=20, pool_recycle=1800)
+		else:
+			self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_recycle=1800)
 		self.metadata = Base.metadata
 		self.metadata.bind = self.engine
 		self.metadata.create_all(self.engine)
@@ -274,7 +279,7 @@ class LadderDB:
 		for name in owner:
 			try:
 				self.AddPlayer( name,Roles.Owner, '')
-			except:
+			except Exception:
 				print 'error adding owner ',name
 
 	def ReportMatch( self, matchresult, doValidation=True ):
@@ -377,7 +382,7 @@ class LadderDB:
 			player = player_query.first()
 			if player:
 				is_global_banned = player.role == Roles.GlobalBanned
-				is_banned = 0 < session.query( Bans ).filter( Bans.player_id == player.id ).filter( Bans.ladder_id == ladder_id ).filter( Bans.end >= datetime.datetime.now() ).count()
+				is_banned = 0 < session.query( Bans ).filter( Bans.player_id == player.id ).filter( Bans.ladder_id == ladder_id ).filter( Bans.end >= datetime.now() ).count()
 				if is_banned:
 					session.close()
 					return False
@@ -387,7 +392,7 @@ class LadderDB:
 			return False
 		except exc.DBAPIError, e:
 			trace = traceback.format_exc()
-			Log.Error( trace, '[LadderDB Exception]' )
+			Log.error( trace, '[LadderDB Exception]' )
 			raise DbConnectionLostException(trace)
 
 	def AddLadderAdmin( self, ladder_id, username ):
@@ -503,7 +508,7 @@ class LadderDB:
 			ban.end = datetime.date.max
 		else:
 			try:
-				ban.end = datetime.datetime.now() + banlength
+				ban.end = datetime.now() + banlength
 			except OverflowError:
 				ban.end = datetime.date.max
 		ban.ladder_id = ladder_id
@@ -517,7 +522,7 @@ class LadderDB:
 		bans = session.query( Bans ).filter( Bans.player_id == player.id ).filter( Bans.ladder_id == ladder_id ).all()
 		for b in bans:
 			if just_expire:
-				b.end = datetime.datetime.now()
+				b.end = datetime.now()
 				session.add( b )
 			else:
 				session.delete( b )
@@ -528,9 +533,9 @@ class LadderDB:
 	def GetBansPerLadder( self, ladder_id ):
 		session = self.sessionmaker()
 		if ladder_id == -1:
-			bans = session.query( Bans ).filter( Bans.end >= datetime.datetime.now() ).all()
+			bans = session.query( Bans ).filter( Bans.end >= datetime.now() ).all()
 		else:
-			bans = session.query( Bans ).filter( Bans.end >= datetime.datetime.now() ).filter( Bans.ladder_id == ladder_id ).all()
+			bans = session.query( Bans ).filter( Bans.end >= datetime.now() ).filter( Bans.ladder_id == ladder_id ).all()
 		session.close()
 		return bans
 
@@ -577,7 +582,7 @@ class LadderDB:
 					for p in session.query( Player ).all():
 						p.server_id = -1
 						session.add( p )
-				except:
+				except Exception:
 					print "execute: ALTER TABLE players ADD server_id int\n" * 67
 					exit(-1)
 
