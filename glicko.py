@@ -1,8 +1,13 @@
-# -*- coding: utf-8 -*-
+from sqlalchemy import or_, and_
+import math
+import time
+import datetime
+
+
 from ranking import IRanking,RankingTable,calculateWinnerOrder
 from db_entities import GlickoRanks,Player,Match,Result
-from sqlalchemy import or_, and_
-import math,time,datetime
+
+
 class GlickoRankAlgo(IRanking):
 
 	q = math.log( 10.0 ) / 400.0

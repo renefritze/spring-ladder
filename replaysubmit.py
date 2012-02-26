@@ -1,6 +1,4 @@
 # -*- coding: utf-8 -*-
-from customlog import *
-from ParseConfig import *
 import commands
 import thread
 import signal
@@ -10,6 +8,9 @@ import subprocess
 import traceback
 import platform
 import sys
+
+from tasbot.customlog import Log
+#from ParseConfig import *
 
 from db_entities import *
 from ladderdb import *

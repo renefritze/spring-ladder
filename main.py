@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 
-import tasbot
+
 from tasbot.customlog import Log
 
 if __name__=="__main__":

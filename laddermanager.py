@@ -6,18 +6,19 @@ import sys
 import signal
 import traceback
 import subprocess
-from ConfigParser import SafeConfigParser as ConfigParser
 import platform
 if platform.system() == "Windows":
 	import win32api
+from ConfigParser import SafeConfigParser as ConfigParser
+
 
 from tasbot.customlog import Log
 from tasbot.config import Config
 from tasbot.plugin import IPlugin
 
+
 from db_entities import *
 from ladderdb import *
->>>>>>> github/master
 import helpstrings
 
 
