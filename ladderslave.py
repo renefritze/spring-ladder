@@ -1,12 +1,7 @@
-import commands
 import thread
 import signal
-import os
-import time
 import subprocess
-import traceback
 import platform
-import sys
 import random
 if platform.system() == "Windows":
 	import win32api
@@ -382,7 +377,7 @@ class Main(IPlugin):
 			for option in args[0].split():
 				pieces = parselist( option, "=" )
 				if len(pieces) != 2:
-					error( "parsing error of option string: " + option )
+					self.logger.error( "parsing error of option string: " + option )
 				key = pieces[0]
 				if key.startswith("/game/"): # strip prefix
 					key = key[6:]
@@ -390,6 +385,7 @@ class Main(IPlugin):
 					key = key[5:]
 				if key.startswith("restrict/"):
 					unitname = key[9:]
+					raise FuckUpexception
 					self.disabledunits[unitname] = int(value)
 				value = pieces[1]
 				self.battleoptions[key] = value
@@ -674,13 +670,13 @@ class Main(IPlugin):
 			self.JoinGame(s)
 		if command == "CLIENTBATTLESTATUS":
 			if len(args) != 3:
-				error( "invalid CLIENTBATTLESTATUS:%s"%(args) )
+				self.logger.error( "invalid CLIENTBATTLESTATUS:%s"%(args) )
 			bs = BattleStatus( args[1], args[0] )
 			self.battle_statusmap[ args[0] ] = bs
 			self.FillTeamAndAllies()
 		if command == "LEFTBATTLE":
 			if len(args) != 2:
-				error( "invalid LEFTBATTLE:%s"%(args) )
+				self.logger.error( "invalid LEFTBATTLE:%s"%(args) )
 			if int(args[0]) == self.battleid:
 				player = args[1]
 				if player in self.battle_statusmap:
@@ -690,7 +686,7 @@ class Main(IPlugin):
 					self.scriptpassword = ""
 		if command == "ADDBOT":
 			if len(args) != 6:
-				error( "invalid ADDBOT:%s"%(args) )
+				self.logger.error( "invalid ADDBOT:%s"%(args) )
 			if int(args[0]) == self.battleid:
 				botlib = args[5] # we'll use the bot's lib name intead of player name for ladder pourposes
 				name = args[1]
@@ -701,14 +697,14 @@ class Main(IPlugin):
 				self.bots[name] = botlib
 		if command == "UPDATEBOT":
 			if len(args) < 2:
-				error( "invalid UPDATEBOT:%s"%(args) )
+				self.logger.error( "invalid UPDATEBOT:%s"%(args) )
 			name = args[0]
 			bs = BattleStatus( args[1], name )
 			self.battle_statusmap[ botlib ] = bs
 			self.FillTeamAndAllies()
 		if command == "REMOVEBOT":
 			if len(args) != 2:
-				error( "invalid REMOVEBOT:%s"%(args) )
+				self.logger.error( "invalid REMOVEBOT:%s"%(args) )
 			if int(args[0]) == self.battleid:
 				name = args[1]
 				if name in self.bots:

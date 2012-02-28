@@ -1,10 +1,6 @@
 # -*- coding: utf-8 -*-
-import commands
 import thread
-import os
-import sys
 import signal
-import traceback
 import subprocess
 import platform
 if platform.system() == "Windows":
@@ -95,7 +91,7 @@ class Main(IPlugin):
 		self.tsc = tasc
 		self.bans = []
 		self.app = tasc.main
-		self.channels = self.app.config.get_optionlist('ladder', "channelautojoinlist")
+		self.channels = self.app.config.get_optionlist('join_channels', "channels")
 		self.admins = self.app.config.get_optionlist('tasbot', "admins")
 		self.db = LadderDB( self.app.config.get('tasbot', "alchemy-uri"), self.admins, int(self.app.config.get('tasbot', "alchemy-verbose")) )
 		self.closewhenempty = False
@@ -152,7 +148,7 @@ class Main(IPlugin):
 				try:
 					battleid = self.tsc.users[fromwho].battleid
 				except Exception:
-					bad("User " + fromwho + " not found")
+					Log.bad("User " + fromwho + " not found")
 				if ( battleid < 0 ):
 					self.notifyuser( socket, fromwho, fromwhere, ispm, "You are not in a battle." )
 				else:
@@ -212,7 +208,7 @@ class Main(IPlugin):
 						ladderid = self.db.AddLadder( laddername )
 						self.notifyuser( socket, fromwho, fromwhere, ispm, "New ladder created, ID: " + str(ladderid) )
 					except ElementExistsException, e:
-						error(e)
+						Log.error(e)
 			if command == "!ladderremove":
 				if not self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
 					self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
@@ -591,9 +587,9 @@ class Main(IPlugin):
 						else:
 							days = 0
 							hours = float(t_fields[0])
-						t_delta = timedelta( days=days, hours=hours )
+						t_delta = datetime.timedelta( days=days, hours=hours )
 					else:
-						t_delta = timedelta.max
+						t_delta = datetime.timedelta.max
 					if not self.db.AccessCheck( -1, fromwho, Roles.GlobalAdmin ):
 							self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
 								#log
@@ -629,9 +625,9 @@ class Main(IPlugin):
 						else:
 							days = 0
 							hours = float(t_fields[0])
-						t_delta = timedelta( days=days, hours=hours )
+						t_delta = datetime.timedelta( days=days, hours=hours )
 					else:
-						t_delta = timedelta.max
+						t_delta = datetime.timedelta.max
 					if not self.db.AccessCheck( ladderid, fromwho, Roles.LadderAdmin ):
 							self.sayPermissionDenied( socket, command, fromwho, fromwhere, ispm )
 								#log

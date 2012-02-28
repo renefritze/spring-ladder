@@ -6,7 +6,8 @@ class Disqus(object):
 	def __init__(self, config, cache):
 		self.config = config
 		self.cache = cache
-		self.disqus = DisqusAPI(config['disqus_seckey'])
+		self.disqus = DisqusAPI(config.get('ladder','disqus_seckey'),
+							public_key=config.get('ladder','disqus_pubkey') )
 		# ( 1000 requests / 3600 seconds ) * functioncount
 		self.expire_time = max(60,( 1000.0 / 3600.0 ) * 1.0)
 

@@ -1,11 +1,10 @@
 from sqlalchemy import or_, and_
 import math
-import time
-import datetime
+from collections import defaultdict
 
 from ranking import IRanking, RankingTable, calculateWinnerOrder
-from db_entities import TrueskillRanks, Player, Match, Result
-from trueskill import trueskill
+from db_entities import TrueskillRanks, Player
+import trueskill
 
 class TrueskillRankAlgo(IRanking):
 
@@ -13,9 +12,13 @@ class TrueskillRankAlgo(IRanking):
 		scores, result_dict = calculateWinnerOrder(match,db)
 		session = db.sessionmaker()
 		ranks = []
-		
+		teams = defaultdict(tuple)
+		player_id_map = defaultdict(list)
+		def constant_factory(value):
+			import itertools
+			return itertools.repeat(value).next
+		maxteam_score = defaultdict(constant_factory(-100000))
 		for name,result in result_dict.iteritems():
-			
 			player_id = session.query( Player ).filter( Player.nick == name ).first().id
 			rank = session.query( TrueskillRanks ).filter( TrueskillRanks.ladder_id == ladder_id ).filter( TrueskillRanks.player_id == player_id ).first()
 			if not rank:
@@ -24,16 +27,35 @@ class TrueskillRankAlgo(IRanking):
 				rank.player_id = player_id
 			session.add(rank)
 			#our trueskill lib assumes lowest score <--> winner
-			rank.rank = scores[name] * -1 
-			#must i commit everytime?
-			session.commit()
-			ranks.append( rank )
-
-		trueskill.AdjustPlayers(ranks)
-		for rank in ranks:
-			session.add ( rank )
+			rank.rank = scores[name]
+			l = list(teams[result.team])
+			l.append(rank.rating)
+			teams[result.team] = tuple(l)
+			player_id_map[result.team].append(player_id)
+			maxteam_score[result.team] = max(maxteam_score[result.team],scores[name])
 		session.commit()
 
+		ordered_teams = []
+		ordered_maxteam_score = []
+		team_ids = teams.keys()
+		team_ids.sort()
+		for i in range(len(teams)):
+			ordered_teams.append(teams[team_ids[i]])
+			ordered_maxteam_score.append(maxteam_score[team_ids[i]])
+		i = 0
+		for team_ratings in trueskill.transform_ratings(ordered_teams,ordered_maxteam_score):
+			j = 0
+			current_team = team_ids[i]
+			q = session.query( TrueskillRanks ).filter( TrueskillRanks.ladder_id == ladder_id )
+			for rating in team_ratings:
+				pids = player_id_map[current_team]
+				pid = pids[j]
+				rank = q.filter( TrueskillRanks.player_id == pid ).one()
+				rank.rating = rating
+				session.add( rank )
+				j += 1
+			i += 1
+		session.commit()
 		session.close()
 
 	@staticmethod

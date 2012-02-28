@@ -1,13 +1,13 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from globe import config, cache,db
 from datetime import timedelta,datetime,date,time
 import matplotlib 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from threading import Lock
+
+from globe import config, cache, db, mkdir_p
 from db_entities import Match,Player,Result
 
-from threading import Lock
 mutex = Lock()
 
 fail_offset = timedelta(days=363)
@@ -32,10 +32,12 @@ def matches_per_ladder( ladderid ):
 		plt.plot(range(len(data)),data)
 		plt.ylabel('matches per day')
 		plt.xlabel('days past')
-		plt.savefig(config['base_dir']+fn,transparent=True)
+		plt.savefig(config.get('ladder','base_dir')+fn,transparent=True)
 		plt.close(1)
 	s.close()
-	return config['base_url'] + fn
+	path = config.get('ladder','base_dir') + fn
+	mkdir_p(path)
+	return path
 	
 @cache.cache('matches_per_player',expire=3600)
 def matches_per_player( playerid ):

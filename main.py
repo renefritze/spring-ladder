@@ -3,6 +3,7 @@
 import sys
 
 
+import tasbot
 from tasbot.customlog import Log
 
 if __name__=="__main__":
@@ -11,7 +12,7 @@ if __name__=="__main__":
 	for arg in sys.argv:
 		if arg.strip() == "-r":
 			r = True
-			Log.Notice("Registering account")
+			Log.notice("Registering account")
 	slave = False
 	try:
 		idx = sys.argv.index('-c')

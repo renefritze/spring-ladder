@@ -4,8 +4,9 @@ try:
 	from sqlalchemy.exceptions import UnboundExecutionError
 except Exception:
 	from sqlalchemy.exc import UnboundExecutionError
+from sqlalchemy.orm.exc import DetachedInstanceError
 
-from db_entities import *
+from db_entities import Player, SimpleRanks
 
 
 class RankingTable:
@@ -48,7 +49,7 @@ class RankingAlgoSelector:
 
 	def GetInstance(self, name ):
 		if not name in RankingAlgoSelector.available_ranking_algos:
-			raise ElementNotFoundException( name )
+			raise TypeError( name )
 		return self.algos[name]
 
 	def GetPrintableRepresentation(self, rank_list,db ):
@@ -94,12 +95,12 @@ class RankingAlgoSelector:
 
 def calculateWinnerOrder(match,db):
 		session = db.sessionmaker()
-		#session.add( match ) #w/o this match is unbound, no lazy load of results
+#		session.add( match ) #w/o this match is unbound, no lazy load of results
 		result_dict = dict()
 		try:
 			for r in match.results:
 				result_dict[r.player.nick] = r
-		except UnboundExecutionError,u:
+		except DetachedInstanceError,u:
 			session.add( match )
 			for r in match.results:
 				session.add( r )

@@ -21,19 +21,19 @@ if platform.system() == "Windows":
 
 from utilities import *
 
-class ReplayReporter:
-	def  __init__ ( alchemyuri, alchemyverbose, springdedclientpath, springdatapath ):
+class ReplayReporter(object):
+	def  __init__ ( self, alchemyuri, alchemyverbose, springdedclientpath, springdatapath ):
 		self.springdedclientpath = springdedclientpath
 		self.springdatapath = springdatapath
-		db = LadderDB( alchemyuri, alchemyverbose )
+		self.db = LadderDB( alchemyuri, alchemyverbose )
 
-	def SubmitLadderReplay( replaypath, ladderid ):
+	def SubmitLadderReplay( self, replaypath, ladderid ):
 		currentworkingdir = os.getcwd()
 		try:
 			output = ""
-			doSubmit = ladderid != -1 and db.LadderExists( ladderid )
+			doSubmit = ladderid != -1 and self.db.LadderExists( ladderid )
 			if not doSubmit:
-				Log.error( red + "Error: ladder %d does not exist" % ( ladderid ) + normal, 'ReplayReporter' )
+				Log.error( "Error: ladder %d does not exist" % ( ladderid ) )
 				return False
 			st = time.time()
 			Log.info( "*** Starting spring: command line \"%s %s\"" % (self.springdedclientpath, replaypath ), 'ReplayReporter' ) 
@@ -59,7 +59,7 @@ class ReplayReporter:
 			elif doSubmit:
 				mr = MatchToDbWrapper( output, ladderid )
 				try:
-					db.ReportMatch( mr )
+					self.db.ReportMatch( mr )
 				except Exception:
 					Log.error( 'reporting match failed', 'ReplayReporter' )
 					return False

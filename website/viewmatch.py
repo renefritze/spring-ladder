@@ -49,7 +49,8 @@ def output( ):
 			match = s.query( Match ).options(eagerload('settings')).filter(Match.id == id ).first()
 			template = env.get_template('viewmatch.html')
 			opt_headers = ['key','val','wl/bl']
-			ret = template.render(ladder=match.ladder, matchinfo=MatchInfoToTableAdapter(match),base_url=config['base_url'] )
+			url = config.get('ladder','base_url')
+			ret = template.render(ladder=match.ladder, matchinfo=MatchInfoToTableAdapter(match),base_url=url )
 		s.close()
 		return ret
 		

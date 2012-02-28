@@ -1,10 +1,9 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+from bottle import route,request
 
 from fieldsets import getSingleField
 from ranking import GlobalRankingAlgoSelector
-from bottle import route,request
-from globe import db,env
+from globe import db, env
+from ladderdb import ElementNotFoundException,EmptyRankingListException
 
 @route('/scoreboard')
 def output( ):

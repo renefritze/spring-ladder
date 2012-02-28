@@ -2,7 +2,7 @@
 from sqlalchemy import *
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
-from datetime import datetime
+import datetime
 import hashlib
 
 Base = declarative_base()
@@ -242,7 +242,7 @@ class GlickoRanks(Base):
 			return cmp( self.rating, otherRank.rating )
 		else:
 			return 1
-
+import trueskill
 class TrueskillRanks(Base):
 	__tablename__	= 'trueskillranks'
 	id 				= Column( Integer, primary_key=True )
@@ -262,14 +262,14 @@ class TrueskillRanks(Base):
 	def combined(self):
 		return self.mu - 3*self.sigma
 		
-	def _setSkill(self,skill):
-		self.mu 	= skill[0]
-		self.sigma 	= skill[1]
+	def _setRating(self,rating):
+		self.mu 	= rating.mu
+		self.sigma 	= rating.sigma
 		
-	def _getSkill(self):
-		return (self.mu,self.sigma)
+	def _getRating(self):
+		return trueskill.Rating(self.mu,self.sigma)
 		
-	skill = property(_getSkill,_setSkill)
+	rating = property(_getRating,_setRating)
 
 	def __str__(self):
 		return '%f (%f|%f)'%(self.combined(),self.mu,self.sigma)

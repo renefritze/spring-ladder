@@ -8,3 +8,4 @@
 # Dependencies
 
 	* http://pypi.python.org/pypi/trueskill
+	* formalchemy, disqus-python

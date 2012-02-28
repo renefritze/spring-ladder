@@ -17,6 +17,8 @@ def output( ):
 		if not id:
 			ladder_list = []
 			ladder_triple_list = s.query(Ladder).order_by( Ladder.name )
+			if ladder_triple_list.count() < 1:
+				raise ElementNotFoundException('djwp')
 			#ladder_triple_list = [db.GetLadder( 17 )]
 			for  l in ladder_triple_list:
 				ladder_id = l.id

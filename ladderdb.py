@@ -1,16 +1,16 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
-from sqlalchemy import exc
-import traceback
-import datetime
-import math
-import hashlib
+#from sqlalchemy import exc
+#import traceback
+#import datetime
+#import math
+#import hashlib
 
 from tasbot.customlog import *
 
 from db_entities import *
-from ranking import *
 from match import *
+from ranking import GlobalRankingAlgoSelector
 
 current_db_rev = 4
 
@@ -182,7 +182,7 @@ class LadderDB:
 		ladder = session.query(Ladder).filter( Ladder.id == ladder_id ).first()
 		session.close()
 		if not ladder:
-			raise ElementNotFoundException( Ladder( ladderID ) )
+			raise ElementNotFoundException( Ladder( ladder_id ) )
 		else:
 			return getattr(ladder, field)
 

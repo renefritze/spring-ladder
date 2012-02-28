@@ -25,7 +25,7 @@ def favi():
 	return send_file( 'favicon.ico', root=os.getcwd()+'/images/' )
 
 if __name__=="__main__":
-	port = config['port']
+	port = int(config.get('ladder','port'))
 	debug(True)
 	app = default_app()
 	run(app=app,server=PasteServer,host='localhost',port=port , reloader=False)
