@@ -95,7 +95,7 @@ class Main(IPlugin):
 		self.tsc = tasc
 		self.bans = []
 		self.app = tasc.main
-		self.channels = self.app.config.get_optionlist('ladder', "channelautojoinlist")
+		self.channels = self.app.config.get_optionlist('join_channels', "channels")
 		self.admins = self.app.config.get_optionlist('tasbot', "admins")
 		self.db = LadderDB( self.app.config.get('tasbot', "alchemy-uri"), self.admins, int(self.app.config.get('tasbot', "alchemy-verbose")) )
 		self.closewhenempty = False
