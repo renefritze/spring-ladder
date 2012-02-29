@@ -60,7 +60,7 @@ class LadderInfoToTableAdapter:
 		self.rows.append( [ 'max amount of controlTeams allied' 	, ladder.max_ally_size ] )
 		self.rows.append( [ 'min amount of ally sides' 	, ladder.min_ally_count ] )
 		self.rows.append( [ 'max amount of ally sides' 	, ladder.max_ally_count ] )
-		self.rows.append( [ 'ranking algorythm' 	, ladder.ranking_algo_id ] )
+		self.rows.append( [ 'ranking algorithm' 	, ladder.ranking_algo_id ] )
 
 class LadderOptionsAdapter:
 	def __init__(self,options,ladder):
@@ -86,8 +86,8 @@ class MatchInfoToTableAdapter:
 		self.match = match
 		match.results.sort()
 		self.rows = []
-		self.rows.append( [ 'date'		, match.date] )
-		self.rows.append( [ 'modname'	, match.modname] )
-		self.rows.append( [ 'mapname'	, match.mapname] )
-		self.rows.append( [ 'replay'	, '<a href="%s" >%s</a>'%(match.replay,match.replay.split('/')[-1]) ] )
-		self.rows.append( [ 'duration'	, match.duration] )
+		self.rows.append( [ 'Game'	, match.modname] )
+		self.rows.append( [ 'Map'	, match.mapname] )
+		self.rows.append( [ 'Replay'	, '<a href="%s" >%s</a>'%(match.replay,match.replay.split('/')[-1]) ] )
+		self.rows.append( [ 'Date'		, match.date] )
+		self.rows.append( [ 'Duration'	, match.duration] )
