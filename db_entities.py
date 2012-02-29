@@ -4,6 +4,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
 import datetime
 import hashlib
+import trueskill
 
 Base = declarative_base()
 
@@ -92,7 +93,7 @@ class Player(Base):
 	def __init__(self, nick='noname', role=Roles.User, pw=''):
 		self.nick 		= nick
 		self.role 		= role
-		do_hide_results = False
+		self.do_hide_results = False
 		self.server_id		= -1
 	def __str__(self):
 		return "Player(id:%d,server_id:%d) %s "%(self.id, self.server_id, self.nick)
@@ -173,6 +174,14 @@ class Result(Base):
 		if other.kicked or self.kicked:
 			return 0
 		return valuetocompare1 < valuetocompare2
+	
+	def __str__(self):
+		try:
+			return 'Result: %s team(%d) died(%d) quit(%d) '%(self.player.nick,
+						self.team,self.died,self.quit)
+		except:
+			return'Result: team(%s) died(%d) quit(%d) '%(
+						self.team,self.died,self.quit)
 
 class Bans(Base):
 	__tablename__	= 'bans'
@@ -186,9 +195,11 @@ class Bans(Base):
 
 	def __str__(self):
 		if self.ladder_id != -1:
-			ret = '%s on Ladder %s: %s remaining'%( self.player.nick,self.ladder.name,str(self.end - datetime.now() ) )
+			ret = '%s on Ladder %s: %s remaining'%( self.player.nick,
+							self.ladder.name,str(self.end - datetime.datetime.now() ) )
 		else:
-			ret = '%s (global ban): %s remaining'%( self.player.nick,str(self.end - datetime.now() ) )
+			ret = '%s (global ban): %s remaining'%( self.player.nick,
+							str(self.end - datetime.datetime.now() ) )
 		return ret
 
 
@@ -242,7 +253,7 @@ class GlickoRanks(Base):
 			return cmp( self.rating, otherRank.rating )
 		else:
 			return 1
-import trueskill
+
 class TrueskillRanks(Base):
 	__tablename__	= 'trueskillranks'
 	id 				= Column( Integer, primary_key=True )

@@ -27,16 +27,16 @@ def matches_per_ladder( ladderid ):
 		i += 1
 		now += inc
 	fn = 'images/plots/ladder_matches_%i.png'%int(ladderid)
+	path = config.get('ladder','base_dir') + fn
+	mkdir_p(path)
 	with mutex:
 		f = plt.figure(1)
 		plt.plot(range(len(data)),data)
 		plt.ylabel('matches per day')
 		plt.xlabel('days past')
-		plt.savefig(config.get('ladder','base_dir')+fn,transparent=True)
+		plt.savefig(path,transparent=True)
 		plt.close(1)
 	s.close()
-	path = config.get('ladder','base_dir') + fn
-	mkdir_p(path)
 	return path
 	
 @cache.cache('matches_per_player',expire=3600)
@@ -54,12 +54,14 @@ def matches_per_player( playerid ):
 		i += 1
 		now += inc
 	fn = 'images/plots/player_matches_%i.png'%int(playerid)
+	path = config.get('ladder','base_dir') + fn
+	mkdir_p(path)
 	with mutex:
 		f = plt.figure(1)
 		plt.plot(range(len(data)),data)
 		plt.ylabel('matches per day')
 		plt.xlabel('days past')
-		plt.savefig(config['base_dir']+fn,transparent=True)
+		plt.savefig(path,transparent=True)
 		plt.close(1)
 	s.close()
-	return config['base_url'] + fn
+	return path

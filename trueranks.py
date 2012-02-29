@@ -11,14 +11,15 @@ class TrueskillRankAlgo(IRanking):
 	def Update(self,ladder_id,match,db):
 		scores, result_dict = calculateWinnerOrder(match,db)
 		session = db.sessionmaker()
-		ranks = []
+
 		teams = defaultdict(tuple)
 		player_id_map = defaultdict(list)
 		def constant_factory(value):
 			import itertools
 			return itertools.repeat(value).next
-		maxteam_score = defaultdict(constant_factory(-100000))
+		minteam_score = defaultdict(constant_factory(100000))
 		for name,result in result_dict.iteritems():
+			score = scores[name] * -1
 			player_id = session.query( Player ).filter( Player.nick == name ).first().id
 			rank = session.query( TrueskillRanks ).filter( TrueskillRanks.ladder_id == ladder_id ).filter( TrueskillRanks.player_id == player_id ).first()
 			if not rank:
@@ -26,24 +27,24 @@ class TrueskillRankAlgo(IRanking):
 				rank.ladder_id = ladder_id
 				rank.player_id = player_id
 			session.add(rank)
-			#our trueskill lib assumes lowest score <--> winner
-			rank.rank = scores[name]
+
+			rank.rank = score
 			l = list(teams[result.team])
 			l.append(rank.rating)
 			teams[result.team] = tuple(l)
 			player_id_map[result.team].append(player_id)
-			maxteam_score[result.team] = max(maxteam_score[result.team],scores[name])
+			minteam_score[result.team] = min(minteam_score[result.team],score)
 		session.commit()
 
 		ordered_teams = []
-		ordered_maxteam_score = []
+		ordered_minteam_score = []
 		team_ids = teams.keys()
 		team_ids.sort()
 		for i in range(len(teams)):
 			ordered_teams.append(teams[team_ids[i]])
-			ordered_maxteam_score.append(maxteam_score[team_ids[i]])
+			ordered_minteam_score.append(minteam_score[team_ids[i]])
 		i = 0
-		for team_ratings in trueskill.transform_ratings(ordered_teams,ordered_maxteam_score):
+		for team_ratings in trueskill.transform_ratings(ordered_teams,ordered_minteam_score):
 			j = 0
 			current_team = team_ids[i]
 			q = session.query( TrueskillRanks ).filter( TrueskillRanks.ladder_id == ladder_id )

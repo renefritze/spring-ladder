@@ -6,8 +6,9 @@ except Exception:
 	from sqlalchemy.exc import UnboundExecutionError
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from db_entities import Player, SimpleRanks
+from tasbot.customlog import Log
 
+from db_entities import Player, SimpleRanks
 
 class RankingTable:
 	header 	= []
@@ -60,7 +61,7 @@ class RankingAlgoSelector:
 			for algo in self.algos.values():
 				if isinstance( el, algo.GetDbEntityType() ):
 					return algo.GetPrintableRepresentation( rank_list,db )
-			print 'no suitable algo for printing rank list found '
+			Log.error('no suitable algo for printing rank list found ', 'Ranking')
 			return ''
 
 	def GetCandidateOpponents(self,player_nick,ladder_id,db):
@@ -112,16 +113,16 @@ def calculateWinnerOrder(match,db):
 
 		playercount = len(result_dict)
 		for name,player in result_dict.iteritems():
-			if player.died > -1 and player.died < match.last_frame:
+			if player.died > -1 and player.died <= match.last_frame:
 				deaths[name] = player.died
-			if player.disconnect > -1 and player.disconnect < match.last_frame:
+			if player.disconnect > -1 and player.disconnect <= match.last_frame:
 				if player.quit:
 					scores[name] = -5
 				elif player.timeout:
 					scores[name] = -1
 				elif player.kicked:
 					scores[name] = 0
-			if player.desync > -1 and player.desync < match.last_frame:
+			if player.desync > -1 and player.desync <= match.last_frame:
 				scores[name] = 0
 		#find last team standing
 		for name in result_dict.keys():

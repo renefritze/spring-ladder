@@ -3,7 +3,7 @@ from bottle import route,request
 from fieldsets import getSingleField
 from ranking import GlobalRankingAlgoSelector
 from globe import db, env
-from ladderdb import ElementNotFoundException,EmptyRankingListException
+from ladderdb import ElementNotFoundException, EmptyRankingListException
 
 @route('/scoreboard')
 def output( ):

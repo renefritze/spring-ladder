@@ -1,20 +1,17 @@
 #!/usr/bin/env python
-
-import sys
-from ranking import GlobalRankingAlgoSelector
-from match import AutomaticMatchToDbWrapper
-import tasbot
-from ladderdb import LadderDB
-files = sys.argv[1:]
-
-
 import ConfigParser
-
+import sys
 from pyparsing import (Literal, CaselessLiteral, Word, Upcase, OneOrMore, ZeroOrMore, 
         Forward, NotAny, delimitedList, oneOf, Group, Optional, Combine, alphas, nums, 
         restOfLine, cStyleComment, alphanums, printables, empty, quotedString, 
         ParseException, ParseResults, Keyword, Dict )
 import pprint
+
+
+import tasbot
+from ladderdb import LadderDB
+from replaysubmit import ReplayReporter
+
 
 def parseScript(script):
 	lbrace = Literal("{").suppress()
@@ -40,28 +37,29 @@ def parseScript(script):
 	iniData = "".join( open('okk').readlines() )
 	return inibnf.parseString( iniData )
 	
-pp = pprint.PrettyPrinter(4)
-
-tokens = parseScript('okk')
-#pp.pprint( tokens.asList() )
-
-configfile = 'Main.conf'
-config = tasbot.config.Config(configfile)
-tasbot.customlog.Log.init(config.get('tasbot', 'logfile', 'ladderbot.log'),
-		config.get('tasbot', 'loglevel', 'info'), True )
-app = tasbot.DefaultApp(configfile,'/tmp/demo.pid',False,True)
-db = LadderDB( app.config.get('tasbot', "alchemy-uri"), app.admins, 
-			int(app.config.get('tasbot', "alchemy-verbose")) )
-
-lid = 1
-if not db.LadderExists(lid):
-#	id = GlobalRankingAlgoSelector.available_ranking_algos['TrueskillRankAlgo']
-	lid = db.AddLadder('anything goes', 2 )
 	
-for fn in files:
-	with open(fn,'r') as f:
-		mr = AutomaticMatchToDbWrapper(fn, lid)			
-		db.ReportMatch(mr, False)#false skips validation check of output against ladder rules
-		upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( db.GetRanks( lid ), db )
-		print(upd)
-		db.RecalcRankings(lid)
+if __name__ == "__main__":
+	pp = pprint.PrettyPrinter(4)
+#	tokens = parseScript('okk')
+	configfile = 'Main.conf'
+	config = tasbot.config.Config(configfile)
+	tasbot.customlog.Log.init( 'import.log' )
+	admins = config.get_optionlist('tasbot', "admins")
+	db = LadderDB(config.get('tasbot', "alchemy-uri"), admins, 
+				int(config.get('tasbot', "alchemy-verbose")) )
+	lid = 1
+	if not db.LadderExists(lid):
+		lid = db.AddLadder('anything goes', 2 )
+	
+	files = sys.argv[1:]
+	fails = []
+	reporter = ReplayReporter(db)
+	for fn in files:
+		reported = reporter.SubmitLadderReplay(fn, lid,False)
+		if not reported:
+			fails.append(fn)
+			
+	db.RecalcRankings(lid)
+	if len(fails):
+		print('Replays failed to parse:')
+		print('\n'.join(fails))
