@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if header %}
+<h1>Maps</h1>
+{% endif %}
+<ul>
+{% for map in maps %}
+  <li><img src="/images/minimaps/256/{{map.minimap}}" /> {{map.name}} {{map.startpos}}  </li>
+{% endfor %}
+</ul>
+<br/>
+{% endblock %}
