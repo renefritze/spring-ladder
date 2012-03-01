@@ -1,8 +1,9 @@
-# -*- coding: utf-8 -*-
-from fieldsets import *
-from ladderdb import ElementNotFoundException, EmptyRankingListException
-from db_entities import Roles
 from bottle import route,request
+
+from fieldsets import *
+from ladderdb import ElementNotFoundException
+from ranking import EmptyRankingListException
+from db_entities import Roles
 from globe import db,env
 from auth import AuthDecorator
 

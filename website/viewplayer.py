@@ -1,11 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+from sqlalchemy import func
+from bottle import route,request
 
 from fieldsets import getSingleField, SortAsc
-from sqlalchemy import func
-from ladderdb import ElementNotFoundException, EmptyRankingListException
+from ladderdb import ElementNotFoundException
+from ranking import EmptyRankingListException
 from db_entities import Player, Result
-from bottle import route,request
 from globe import db,env
 import plots
 

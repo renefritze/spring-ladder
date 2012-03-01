@@ -1,11 +1,13 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from fieldsets import getSingleField, MatchInfoToTableAdapter
-from ladderdb import ElementNotFoundException, EmptyRankingListException
-from db_entities import Ladder, Match, Result
 from bottle import route,request
+import PyRSS2Gen
+import datetime
+import cStringIO
+
+from fieldsets import getSingleField, MatchInfoToTableAdapter
+from ladderdb import ElementNotFoundException
+from ranking import EmptyRankingListException
+from db_entities import Ladder, Match, Result
 from globe import db,env,cache,config
-import PyRSS2Gen, datetime, cStringIO
 
 def get_items(query):
 	items = []

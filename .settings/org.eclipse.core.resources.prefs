@@ -1,15 +1,23 @@
-#Wed Feb 29 16:18:59 CET 2012
+#Thu Mar 01 01:13:03 CET 2012
 eclipse.preferences.version=1
 encoding//tasbot/customlog.py=utf-8
+encoding//website/adminindex.py=utf-8
+encoding//website/adminmatch.py=utf-8
+encoding//website/change_ladder.py=utf-8
 encoding//website/db_entities.py=utf-8
+encoding//website/deleteladder.py=utf-8
 encoding//website/disqus.py=utf-8
+encoding//website/feeds.py=utf-8
 encoding//website/globe.py=utf-8
+encoding//website/index.py=utf-8
 encoding//website/main.py=utf-8
 encoding//website/match.py=utf-8
 encoding//website/plots.py=utf-8
 encoding//website/ranking.py=utf-8
+encoding//website/recalc.py=utf-8
 encoding//website/scoreboard.py=utf-8
 encoding//website/viewladder.py=utf-8
+encoding//website/viewmap.py=utf-8
 encoding//website/viewmatch.py=utf-8
 encoding//website/viewplayer.py=utf-8
 encoding/db_entities.py=utf-8

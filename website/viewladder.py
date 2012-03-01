@@ -1,11 +1,10 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+from bottle import route,request
 
 from fieldsets import getSingleField
-from ladderdb import ElementNotFoundException, EmptyRankingListException
+from ladderdb import ElementNotFoundException
+from ranking import EmptyRankingListException
 from db_entities import Ladder, Match, Result
 from ranking import GlobalRankingAlgoSelector
-from bottle import route,request
 from globe import db,env
 import plots
 
@@ -26,7 +25,7 @@ def output( ):
 				ladder_description = l.description
 				player_count = s.query( Result.id ).group_by( Result.player_id ).\
 					filter(Result.ladder_id == ladder_id).count()
-				match_query = s.query( Match.id,Match.date,Match.mapname ).\
+				match_query = s.query( Match.id,Match.date ).\
 					filter(Match.ladder_id == ladder_id)
 				match_count = match_query.count()
 				last_match = match_query.order_by( Match.date.desc() ).first()

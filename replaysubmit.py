@@ -3,8 +3,8 @@ import platform
 if platform.system() == "Windows":
 	import win32api
 
-
 from tasbot.customlog import Log
+
 from match import AutomaticMatchToDbWrapper, UnterminatedReplayException
 
 
@@ -13,14 +13,13 @@ class ReplayReporter(object):
 		self.db = db
 
 	def SubmitLadderReplay( self, replaypath, ladderid, do_validation=True ):
-		currentworkingdir = os.getcwd()
 		try:
 			if not self.db.LadderExists( ladderid ):
 				Log.error( "Error: ladder %d does not exist" % ( ladderid ) )
 				return False
 			else:
-				mr = AutomaticMatchToDbWrapper( replaypath, ladderid )
 				try:
+					mr = AutomaticMatchToDbWrapper( replaypath, ladderid )
 					return self.db.ReportMatch( mr, do_validation )
 				except UnterminatedReplayException:
 					Log.error('skipping unterminated replay %s'%replaypath, 'ReplayReporter')
@@ -30,7 +29,5 @@ class ReplayReporter(object):
 				return False
 		except Exception, e:
 			Log.exception(e)
-			os.chdir(currentworkingdir)
 			return False
-		os.chdir(currentworkingdir)
 		return True

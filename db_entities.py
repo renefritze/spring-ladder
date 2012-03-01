@@ -5,6 +5,7 @@ from sqlalchemy.orm import *
 import datetime
 import hashlib
 import trueskill
+import os
 
 Base = declarative_base()
 
@@ -106,13 +107,24 @@ class Player(Base):
 	def SetPassword( self, password ):
 		self.pwhash = hashlib.sha224(password).hexdigest()
 		
+class Map(Base):
+	__tablename__	= 'map'
+	name	= Column( String(100), primary_key=True )
+	md5 = Column( String(32) )
+	minimap = Column( String(256) )
+	startpos = Column(PickleType())
+	height = Column( Integer )
+	width = Column( Integer )
+	
+	def basedir(self,config):
+		return os.path.join( config.get('ladder','base_dir'), 'images',
+									'minimaps')
 class Match(Base):
 	__tablename__ 	= 'matches'
 	id 				= Column( Integer, primary_key=True )
 	ladder_id 		= Column( Integer, ForeignKey( Ladder.id ),index=True )
 	date 			= Column( DateTime )
 	modname 		= Column( String( 60 ) )
-	mapname 		= Column( String( 60 ) )
 	replay 			= Column( String( 200 ) )
 	duration 		= Column( Interval )
 	last_frame		= Column( Integer )
@@ -120,6 +132,10 @@ class Match(Base):
 	settings    	= relation("MatchSetting", 	order_by="MatchSetting.key" )#, backref="match" )#this would auto-create a relation in MatchSetting too
 	results			= relation("Result", 		order_by="Result.died" )
 	ladder			= relation("Ladder" )
+
+	mapname 		= Column( String(100), ForeignKey( Map.name ))
+#	map = relation(Map, primaryjoin=mapname == Map.name)
+
 
 class MatchSetting(Base):
 	__tablename__ 	= 'matchsettings'

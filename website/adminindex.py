@@ -1,13 +1,13 @@
-# -*- coding: utf-8 -*-
+import bottle
+from bottle import route,request
 
 from fieldsets import *
 import forms
-from ladderdb import ElementNotFoundException, EmptyRankingListException
+from ladderdb import ElementNotFoundException
+from ranking import EmptyRankingListException
 from db_entities import Option, Roles, Ladder
 from wtforms import Form, BooleanField, TextField, validators, FieldList, \
 	FormField, HiddenField, BooleanField, IntegerField, SelectField
-import bottle
-from bottle import route,request
 from globe import db,env
 from auth import AuthDecorator
 

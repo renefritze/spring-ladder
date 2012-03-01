@@ -3,7 +3,7 @@
 from bottle import route, run, debug, PasteServer, send_file, redirect, abort, request, default_app
 import os, index, viewmatch, viewplayer, viewladder, viewrules, \
 	help, fame, scoreboard, change_ladder,adminindex, recalc, deleteladder, \
-	adminmatch, feeds
+	adminmatch, feeds, viewmap
 from globe import config,staging
 
 @route('/static/:filename')

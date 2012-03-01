@@ -1,17 +1,14 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import *
 from sqlalchemy import exc
-#import traceback
-#import datetime
-#import math
-#import hashlib
 
 from tasbot.customlog import *
 
 from db_entities import *
-from match import *
 from ranking import GlobalRankingAlgoSelector
+from match import MatchToDbWrapper 
 
+ 
 current_db_rev = 4
 
 class ElementExistsException( Exception ):
@@ -58,9 +55,11 @@ class LadderDB:
 		self.SetDBRevision( current_db_rev )
 		self.SetOwner(owner)
 
-	def getSession(self):
+	def session(self):
 		return self.sessionmaker()
-
+	
+	getSession = session 
+	
 	def AddLadder(self, name, ranking_algo_id = 0 ):
 		session = self.sessionmaker()
 		ladder = session.query( Ladder ).filter( Ladder.name == name ).first()
@@ -390,9 +389,8 @@ class LadderDB:
 			session.close()
 			return False
 		except exc.DBAPIError, e:
-			trace = traceback.format_exc()
-			Log.error( trace, '[LadderDB Exception]' )
-			raise DbConnectionLostException(trace)
+			Log.exception( e, '[LadderDB Exception]' )
+			raise DbConnectionLostException(str(e))
 
 	def AddLadderAdmin( self, ladder_id, username ):
 		self.AddOption( ladder_id, True, Option.adminkey, username )

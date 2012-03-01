@@ -5,6 +5,7 @@ from ladderdb import *
 from fieldsets import getSingleField, MatchInfoToTableAdapter
 from bottle import route,request
 from globe import db,env,config,discus
+from ranking import EmptyRankingListException
 
 @route('/match')
 def output( ):
