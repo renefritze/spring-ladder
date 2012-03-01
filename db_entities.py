@@ -108,7 +108,7 @@ class Player(Base):
 		self.pwhash = hashlib.sha224(password).hexdigest()
 		
 class Map(Base):
-	__tablename__	= 'map'
+	__tablename__	= 'maps'
 	name	= Column( String(100), primary_key=True )
 	md5 = Column( String(32) )
 	minimap = Column( String(256) )
@@ -133,7 +133,7 @@ class Match(Base):
 	results			= relation("Result", 		order_by="Result.died" )
 	ladder			= relation("Ladder" )
 
-	mapname 		= Column( String(100), ForeignKey( Map.name ))
+#	mapname 		= Column( String(100), ForeignKey( Map.name ))
 #	map = relation(Map, primaryjoin=mapname == Map.name)
 
 
