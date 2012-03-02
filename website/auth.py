@@ -37,10 +37,10 @@ class AuthDecorator(object):
 
 	def _401Response(self,msg="You need to authenticate with our servers before you may access this content."):
 		bottle.response.status = 401
-		bottle.response.set_content_type('text/json')
+		bottle.response.content_type = 'text/json'
 		#log.info('401 Response Returned: '+msg)
 
-		bottle.response.header['WWW-Authenticate'] = 'Basic realm="SpringLadder"'
+		bottle.response.add_header('WWW-Authenticate',  'Basic realm="SpringLadder"')
 		return json.dumps({"success": False,"msg": msg})
 
 	def __call__(self,f):

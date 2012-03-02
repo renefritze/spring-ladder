@@ -10,15 +10,16 @@ import plots
 
 @route('/ladder')
 def output( ):
-	id = getSingleField( 'id', request )
+	id = getSingleField( 'id', request, '-1' )
 	try:
 		s = db.sessionmaker()
-		if not id:
+		if id == '-1':
 			ladder_list = []
+			print 'L3eI %s'%id
 			ladder_triple_list = s.query(Ladder).order_by( Ladder.name )
 			if ladder_triple_list.count() < 1:
-				raise ElementNotFoundException('djwp')
-			#ladder_triple_list = [db.GetLadder( 17 )]
+				raise Exception('No ladders found to list.')
+			print 'LPUI %s'%id
 			for  l in ladder_triple_list:
 				ladder_id = l.id
 				ladder_name = l.name
@@ -64,7 +65,7 @@ def output( ):
 	except ElementNotFoundException, e:
 		err_msg="ladder with id %s not found"%(str(id))
 
-	except EmptyRankingListException, m:
+	except Exception, m:
 		err_msg=str(m)
 		
 	template = env.get_template('error.html')

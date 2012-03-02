@@ -133,8 +133,8 @@ class Match(Base):
 	results			= relation("Result", 		order_by="Result.died" )
 	ladder			= relation("Ladder" )
 
-#	mapname 		= Column( String(100), ForeignKey( Map.name ))
-#	map = relation(Map, primaryjoin=mapname == Map.name)
+	mapname 		= Column( String(100), ForeignKey( Map.name ))
+	map = relation(Map, primaryjoin=mapname == Map.name)
 
 
 class MatchSetting(Base):

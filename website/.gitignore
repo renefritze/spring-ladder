@@ -2,3 +2,5 @@ buildbot
 Main.conf
 wtforms
 tmp
+images/minimaps/
+images/plots/
