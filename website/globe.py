@@ -23,5 +23,10 @@ db = ladderdb.LadderDB(config.get('tasbot','alchemy-uri'))
 env = Environment(loader=FileSystemLoader('templates'))
 staging = config.get_bool('tasbot','staging')
 cache = CacheManager(**parse_cache_config_options(cache_opts))
-disqus = Disqus(config,cache)
+discus = Disqus(config,cache)
 mkdir_p(config.get('ladder','base_dir'))
+
+def local_file(filename, sub, **kwargs):
+	path = os.path.join(config.get('ladder','base_dir'),sub) 
+	Log.error(path)
+	return static_file(filename, root=path)

@@ -4,11 +4,10 @@ from bottle import route, run, debug, PasteServer, static_file, redirect, abort,
 import os, index, viewmatch, viewplayer, viewladder, viewrules, \
 	help, fame, scoreboard, change_ladder,adminindex, recalc, deleteladder, \
 	adminmatch, feeds, viewmap
-from globe import config,staging
+from globe import config,staging,local_file
 
 
-pp = os.path.join(config.get('ladder','base_dir'),'/images/')
-pp = os.getcwd()+'/images/'
+pp = os.path.join(config.get('ladder','base_dir'),'images')
 print pp
 
 @route('/static/:filename')
@@ -16,7 +15,7 @@ def static_files(filename):
 	return static_file( filename, root=os.getcwd()+'/static/' )
 @route('/images/<filename:path>')
 def image_file(filename):
-	return static_file( filename, root=pp)
+	return send_file( filename, 'images')
 @route('/images/plots/:filename')
 def image_file2(filename):
 	return static_file( filename, root=os.getcwd()+'/images/plots/' )
