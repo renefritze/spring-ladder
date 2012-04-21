@@ -2,6 +2,8 @@ from sqlalchemy import or_, and_
 import math
 from collections import defaultdict
 
+from tasbot.customlog import Log
+
 from ranking import IRanking, RankingTable, calculateWinnerOrder
 from db_entities import TrueskillRanks, Player
 import trueskill
@@ -9,6 +11,7 @@ import trueskill
 class TrueskillRankAlgo(IRanking):
 
 	def Update(self,ladder_id,match,db):
+		#print 'match id %d'%match.id
 		scores, result_dict = calculateWinnerOrder(match,db)
 		session = db.sessionmaker()
 
@@ -44,6 +47,9 @@ class TrueskillRankAlgo(IRanking):
 			ordered_teams.append(teams[team_ids[i]])
 			ordered_minteam_score.append(minteam_score[team_ids[i]])
 		i = 0
+		if len(ordered_teams) < 2:
+			Log.error('less than 2 teams, cannot update ranking')
+			raise Exception('not enough teams')
 		for team_ratings in trueskill.transform_ratings(ordered_teams,ordered_minteam_score):
 			j = 0
 			current_team = team_ids[i]

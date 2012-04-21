@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import ConfigParser
 import sys
+import os
 from pyparsing import (Literal, CaselessLiteral, Word, Upcase, OneOrMore, ZeroOrMore, 
         Forward, NotAny, delimitedList, oneOf, Group, Optional, Combine, alphas, nums, 
         restOfLine, cStyleComment, alphanums, printables, empty, quotedString, 
@@ -40,7 +41,6 @@ def parseScript(script):
 	
 if __name__ == "__main__":
 	pp = pprint.PrettyPrinter(4)
-#	tokens = parseScript('okk')
 	configfile = 'Main.conf'
 	config = tasbot.config.Config(configfile)
 	tasbot.customlog.Log.init( 'import.log' )
@@ -54,7 +54,7 @@ if __name__ == "__main__":
 	files = sys.argv[1:]
 	fails = []
 	reporter = ReplayReporter(db)
-	for fn in files:
+	for fn in [ f for f in files if os.path.exists(f)]:
 		reported = reporter.SubmitLadderReplay(fn, lid,False)
 		if not reported:
 			fails.append(fn)

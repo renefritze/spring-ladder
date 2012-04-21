@@ -88,9 +88,9 @@ from ranking import GlobalRankingAlgoSelector
 def scores_rss(ladder_id):
 	@cache.cache('get_rss_out_scores_single_ladder', expire=300)
 	def get_rss_out(l_id):
-		print 'not cached: get_rss_out(%s)'%str(l_id)
+		s = None
 		try:
-			base_url = config['base_url']
+			base_url = config.get('ladder','base_url')
 			s = db.sessionmaker()			
 			lad = db.GetLadder( ladder_id )
 			rank_table = GlobalRankingAlgoSelector.GetWebRepresentation( db.GetRanks( ladder_id ), db )
