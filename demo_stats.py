@@ -47,7 +47,7 @@ if __name__ == "__main__":
 	admins = config.get_optionlist('tasbot', "admins")
 	db = LadderDB(config.get('tasbot', "alchemy-uri"), admins, 
 				int(config.get('tasbot', "alchemy-verbose")) )
-	lid = 1
+	lid = 27
 	if not db.LadderExists(lid):
 		lid = db.AddLadder('anything goes', 2 )
 	
