@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import ConfigParser
 import sys
 import os
 from pyparsing import (Literal, CaselessLiteral, Word, Upcase, OneOrMore, ZeroOrMore, 
@@ -7,11 +6,6 @@ from pyparsing import (Literal, CaselessLiteral, Word, Upcase, OneOrMore, ZeroOr
         restOfLine, cStyleComment, alphanums, printables, empty, quotedString, 
         ParseException, ParseResults, Keyword, Dict )
 import pprint
-
-
-import tasbot
-from ladderdb import LadderDB
-from replaysubmit import ReplayReporter
 
 
 def parseScript(script):
@@ -41,25 +35,3 @@ def parseScript(script):
 	
 if __name__ == "__main__":
 	pp = pprint.PrettyPrinter(4)
-	configfile = 'Main.conf'
-	config = tasbot.config.Config(configfile)
-	tasbot.customlog.Log.init( 'import.log' )
-	admins = config.get_optionlist('tasbot', "admins")
-	db = LadderDB(config.get('tasbot', "alchemy-uri"), admins, 
-				int(config.get('tasbot', "alchemy-verbose")) )
-	lid = 27
-	if not db.LadderExists(lid):
-		lid = db.AddLadder('anything goes', 2 )
-	
-	files = sys.argv[1:]
-	fails = []
-	reporter = ReplayReporter(db)
-	for fn in [ f for f in files if os.path.exists(f)]:
-		reported = reporter.SubmitLadderReplay(fn, lid,False)
-		if not reported:
-			fails.append(fn)
-			
-	db.RecalcRankings(lid)
-	if len(fails):
-		print('Replays failed to parse:')
-		print('\n'.join(fails))

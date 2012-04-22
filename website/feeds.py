@@ -11,7 +11,7 @@ from globe import db,env,cache,config
 
 def get_items(query):
 	items = []
-	base_url = config['base_url']
+	base_url = config.get('ladder', 'base_url')
 	for match in query:	
 		url = '%smatch?id=%s'%(base_url,match.id)
 		#$postdate = date("Y-m-d H:i", $row['topic_time']);
@@ -27,7 +27,7 @@ def matches_rss(ladder_id):
 	def get_rss_out(l_id):
 		print 'not cached: get_rss_out(%s)'%str(l_id)
 		try:
-			base_url = config['base_url']
+			base_url = config.get('ladder', 'base_url')
 			s = db.sessionmaker()
 			limit = 10
 			matches = s.query( Match ).filter( Match.ladder_id == l_id )
@@ -46,7 +46,7 @@ def matches_rss(ladder_id):
 			return output.getvalue()
 		
 		except Exception, m:
-			if s:
+			if 's' in locals() and s:
 				s.close()
 			return str(m)
 			
@@ -58,7 +58,7 @@ def all_matches_rss():
 	def all_get_rss_out():
 		print 'not cached: all_get_rss_out()'
 		try:
-			base_url = config['base_url']
+			base_url = config.get('ladder', 'base_url')
 			s = db.sessionmaker()
 			limit = 10
 			matches = s.query( Match )
@@ -76,7 +76,7 @@ def all_matches_rss():
 			return output.getvalue()
 		
 		except Exception, m:
-			if s:
+			if 's' in locals() and s:
 				s.close()
 			return str(m)
 			
@@ -113,7 +113,7 @@ def scores_rss(ladder_id):
 			return output.getvalue()
 		
 		except Exception, m:
-			if s:
+			if 's' in locals() and s:
 				s.close()
 			return str(m)
 			

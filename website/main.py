@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from bottle import route, run, debug, PasteServer, static_file, redirect, abort, request, default_app
-import os, index, viewmatch, viewplayer, viewladder, viewrules, \
+from bottle import route, run, debug, PasteServer, redirect, abort, request, default_app
+import os 
+
+import index, viewmatch, viewplayer, viewladder, viewrules, \
 	help, fame, scoreboard, change_ladder,adminindex, recalc, deleteladder, \
 	adminmatch, feeds, viewmap
 from globe import config,staging,local_file
@@ -11,22 +13,22 @@ pp = os.path.join(config.get('ladder','base_dir'),'images')
 print pp
 
 @route('/static/:filename')
-def static_files(filename):
-	return static_file( filename, root=os.getcwd()+'/static/' )
+def local_files(filename):
+	return local_file( filename, 'static' )
 @route('/images/<filename:path>')
 def image_file(filename):
-	return send_file( filename, 'images')
+	return local_file( filename, 'images')
 @route('/images/plots/:filename')
 def image_file2(filename):
-	return static_file( filename, root=os.getcwd()+'/images/plots/' )
+	return local_file( filename, 'images/plots' )
 	
 @route('/demos/:filename')
 def demos(filename):
-	return static_file( filename, root=os.getcwd()+'/demos/' )
+	return local_file( filename, 'demos' )
 
 @route('/favicon.ico')
 def favi():
-	return static_file( 'favicon.ico', root=os.getcwd()+'/images/' )
+	return local_file( 'favicon.ico', 'images' )
 
 if __name__=="__main__":
 	port = int(config.get('ladder','port'))

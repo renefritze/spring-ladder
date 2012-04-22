@@ -2,6 +2,8 @@
 from jinja2 import Environment, FileSystemLoader
 from beaker.cache import CacheManager
 from beaker.util import parse_cache_config_options
+import os
+from bottle import static_file
 
 from tasbot.customlog import Log
 from tasbot.config import Config
@@ -28,5 +30,4 @@ mkdir_p(config.get('ladder','base_dir'))
 
 def local_file(filename, sub, **kwargs):
 	path = os.path.join(config.get('ladder','base_dir'),sub) 
-	Log.error(path)
 	return static_file(filename, root=path)
