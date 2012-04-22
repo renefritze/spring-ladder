@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from datetime import timedelta,datetime,date,time
+import os
 import matplotlib 
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from threading import Lock
 
@@ -9,7 +9,7 @@ from globe import config, cache, db, mkdir_p
 from db_entities import Match,Player,Result
 
 mutex = Lock()
-
+matplotlib.use('Agg')
 fail_offset = timedelta(days=363)
 
 @cache.cache('matches_per_ladder',expire=3600)
@@ -27,7 +27,8 @@ def matches_per_ladder( ladderid ):
 		i += 1
 		now += inc
 	fn = 'images/plots/ladder_matches_%i.png'%int(ladderid)
-	path = config.get('ladder','base_dir') + fn
+	path = os.path.join(config.get('ladder','base_dir'), fn)
+	url = '%s/%s'%(config.get('ladder','base_url'), fn)
 	mkdir_p(path)
 	with mutex:
 		f = plt.figure(1)
@@ -37,7 +38,7 @@ def matches_per_ladder( ladderid ):
 		plt.savefig(path,transparent=True)
 		plt.close(1)
 	s.close()
-	return path
+	return url
 	
 @cache.cache('matches_per_player',expire=3600)
 def matches_per_player( playerid ):
@@ -54,7 +55,8 @@ def matches_per_player( playerid ):
 		i += 1
 		now += inc
 	fn = 'images/plots/player_matches_%i.png'%int(playerid)
-	path = config.get('ladder','base_dir') + fn
+	path = os.path.join(config.get('ladder','base_dir'), fn)
+	url = '%s/%s'%(config.get('ladder','base_url'), fn)
 	mkdir_p(path)
 	with mutex:
 		f = plt.figure(1)
@@ -64,4 +66,4 @@ def matches_per_player( playerid ):
 		plt.savefig(path,transparent=True)
 		plt.close(1)
 	s.close()
-	return path
+	return url

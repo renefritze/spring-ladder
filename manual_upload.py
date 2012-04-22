@@ -8,7 +8,7 @@ import pprint
 import tasbot
 from ladderdb import LadderDB
 from replaysubmit import ReplayReporter
-
+from db_entities import Ladder
 
 if __name__ == "__main__":
 	pp = pprint.PrettyPrinter(4)
@@ -23,7 +23,7 @@ if __name__ == "__main__":
 		lad = db.sessionmaker().query( Ladder ).filter( Ladder.id == lid ).one()
 	except Exception,e:	
 		tasbot.customlog.Log.exception(e)
-		tasbot.customlog.Log.Error('first arg needs to be a valid ladder_id')
+		tasbot.customlog.Log.error('first arg needs to be a valid ladder_id')
 		print('first arg needs to be a valid ladder_id')
 		sys.exit(-1)
 

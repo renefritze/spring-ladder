@@ -1,7 +1,8 @@
-from bottle import route,request
+from bottle import route,request, response
 import PyRSS2Gen
 import datetime
 import cStringIO
+import urllib
 
 from fieldsets import getSingleField, MatchInfoToTableAdapter
 from ladderdb import ElementNotFoundException
@@ -13,7 +14,7 @@ def get_items(query):
 	items = []
 	base_url = config.get('ladder', 'base_url')
 	for match in query:	
-		url = '%smatch?id=%s'%(base_url,match.id)
+		url = '%s/%s' % (base_url, urllib.quote('match?id=%s'%(match.id)))
 		#$postdate = date("Y-m-d H:i", $row['topic_time']);
 		title = '%s'%(match.mapname)
 		template = env.get_template('rss_match.html')
@@ -25,7 +26,6 @@ def get_items(query):
 def matches_rss(ladder_id):
 	@cache.cache('get_rss_out_matches_single_ladder', expire=300)
 	def get_rss_out(l_id):
-		print 'not cached: get_rss_out(%s)'%str(l_id)
 		try:
 			base_url = config.get('ladder', 'base_url')
 			s = db.sessionmaker()
@@ -38,11 +38,12 @@ def matches_rss(ladder_id):
 			rss = PyRSS2Gen.RSS2(
 				title = "%s -- Latest matches"%ladder_name,
 				link = "%sfeeds/matches/%s"%(base_url,l_id),
-				description = "DESCRIPTION",
+				description = "Latest 10 matches played on a single given ladder",
 				lastBuildDate = datetime.datetime.now(),
 				items = items )
 			output = cStringIO.StringIO()
 			rss.write_xml(output)
+			response.headers['Content-Type'] = 'text/xml'
 			return output.getvalue()
 		
 		except Exception, m:
@@ -50,13 +51,13 @@ def matches_rss(ladder_id):
 				s.close()
 			return str(m)
 			
+	response.headers['Content-Type'] = 'text/xml'
 	return get_rss_out(ladder_id)
 	
 @route('/feeds/matches')
 def all_matches_rss():
-	@cache.cache('all_get_rss_out_matches_single_ladder', expire=300)
+	@cache.cache('all_get_rss_out_matches_all', expire=300)
 	def all_get_rss_out():
-		print 'not cached: all_get_rss_out()'
 		try:
 			base_url = config.get('ladder', 'base_url')
 			s = db.sessionmaker()
@@ -67,8 +68,8 @@ def all_matches_rss():
 				return ""
 			rss = PyRSS2Gen.RSS2(
 				title = "SpringLadder -- Latest matches",
-				link = "%sfeeds/matches"%(base_url),
-				description = "DESCRIPTION",
+				link = "%s/feeds/matches"%(base_url),
+				description = "Latest 10 matches played on any ladder",
 				lastBuildDate = datetime.datetime.now(),
 				items = items )
 			output = cStringIO.StringIO()
@@ -80,6 +81,7 @@ def all_matches_rss():
 				s.close()
 			return str(m)
 			
+	response.headers['Content-Type'] = 'text/xml'
 	return all_get_rss_out()	
 
 from ranking import GlobalRankingAlgoSelector
@@ -117,4 +119,5 @@ def scores_rss(ladder_id):
 				s.close()
 			return str(m)
 			
+	response.headers['Content-Type'] = 'text/xml'
 	return get_rss_out(ladder_id)
