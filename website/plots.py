@@ -2,6 +2,7 @@
 from datetime import timedelta,datetime,date,time
 import os
 import matplotlib 
+matplotlib.use('Agg')#must stay here for matplotlib to function w/o DISPLAY set
 import matplotlib.pyplot as plt
 from threading import Lock
 
@@ -9,7 +10,6 @@ from globe import config, cache, db, mkdir_p
 from db_entities import Match,Player,Result
 
 mutex = Lock()
-matplotlib.use('Agg')
 fail_offset = timedelta(days=363)
 
 @cache.cache('matches_per_ladder',expire=3600)
