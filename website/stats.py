@@ -20,8 +20,12 @@ def output( ):
 		#stats['totalduration'] = s.query(func.sum(Match.duration).label('sum'))['sum']
 		#kk = s.query(Match.duration).all()
 		#print kk
+		def _total_seconds(timedelta):
+			if not hasattr(datetime.timedelta, 'total_seconds'):
+				return timedelta.days * 86400.0 + timedelta.seconds + timedelta.microseconds * 1e-6
+			return timedelta.total_seconds()
 		stats['totalduration'] = sum([f[0] for f in s.query(Match.duration).all()], datetime.timedelta())
-		stats['avgduration'] = str(datetime.timedelta(seconds=stats['totalduration'].total_seconds() / float(stats['matchcount'])))
+		stats['avgduration'] = str(datetime.timedelta(seconds=_total_seconds(stats['totalduration']) / float(stats['matchcount'])))
 		stats['totalduration'] = str(stats['totalduration'] )
 		stats['mostplayedmap'] = s.query(Match.mapname,func.count(Match.mapname).label('count')).group_by(Match.mapname).order_by('count DESC').first()
 		stats['mostplayedgame'] = s.query(Match.modname,func.count(Match.modname).label('count')).group_by(Match.modname).order_by('count DESC').first()
