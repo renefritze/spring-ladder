@@ -5,7 +5,7 @@ import os
 
 import index, viewmatch, viewplayer, viewladder, viewrules, \
 	help, fame, scoreboard, change_ladder,adminindex, recalc, deleteladder, \
-	adminmatch, feeds, viewmap
+	adminmatch, feeds, viewmap, stats
 from globe import config,staging,local_file
 
 
