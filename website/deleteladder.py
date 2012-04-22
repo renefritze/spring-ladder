@@ -20,7 +20,7 @@ def output( ):
 			return template.render( err_msg="you're not allowed to delete ladder #%s"%(str(id)) )
 		ask = True
 		if getSingleField( 'confirm', request  ) == 'yes':
-			session = db.sessionmaker()
+			session = db.session()
 			#figure out proper delete cascade instead
 			SYNC_STRAT = 'fetch'
 			session.query( Result ).filter( Result.ladder_id == id ).delete(synchronize_session=SYNC_STRAT)

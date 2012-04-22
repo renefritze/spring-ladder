@@ -15,7 +15,7 @@ def output( ):
 	limit = int(getSingleField( 'limit', request, 18 ))
 	ret = ''
 	try:
-		s = db.sessionmaker()
+		s = db.session()
 		if player_name and ladder_id:
 			ladder = db.GetLadder( ladder_id )
 			player = db.GetPlayer( player_name )

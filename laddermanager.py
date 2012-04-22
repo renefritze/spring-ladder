@@ -662,7 +662,7 @@ class Main(IPlugin):
 				try:
 					bans = self.db.GetBansPerLadder( ladderid )
 					msg = ''
-					s = self.db.sessionmaker() #not nice, but needed for lazy load?!?
+					s = self.db.session() #not nice, but needed for lazy load?!?
 					s.add_all( bans )
 					for b in bans:
 						msg += str(b) + '\n'

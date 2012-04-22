@@ -36,13 +36,13 @@ class DbConnectionLostException( Exception ):
 class LadderDB:
 	def Connect(self):
 		if self.alchemy_uri.startswith('mysql'):
-			self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_size=10, max_overflow=20, pool_recycle=1800)
+			self._engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_size=10, max_overflow=20, pool_recycle=1800)
 		else:
-			self.engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_recycle=1800)
-		self.metadata = Base.metadata
-		self.metadata.bind = self.engine
-		self.metadata.create_all(self.engine)
-		self.sessionmaker = sessionmaker( bind=self.engine )
+			self._engine = create_engine(self.alchemy_uri, echo=self.verbose, pool_recycle=1800)
+		self._metadata = Base.metadata
+		self._metadata.bind = self._engine
+		self._metadata.create_all(self._engine)
+		self._sessionmaker = sessionmaker( bind=self._engine )
 
 	def __init__(self,alchemy_uri,owner=[], verbose=False):
 		global current_db_rev
@@ -56,12 +56,12 @@ class LadderDB:
 		self.SetOwner(owner)
 
 	def session(self):
-		return self.sessionmaker()
+		return scoped_session(self._sessionmaker())
 	
 	getSession = session 
 	
 	def AddLadder(self, name, ranking_algo_id = 0 ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder = session.query( Ladder ).filter( Ladder.name == name ).first()
 		ladderid = -1
 		if not ladder: #no existing ladder with same name
@@ -79,7 +79,7 @@ class LadderDB:
 		return ladderid
 
 	def RemoveLadder(self, ladder_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 
 		ladder = session.query( Ladder ).filter( Ladder.id == ladder_id ).first()
 
@@ -92,7 +92,7 @@ class LadderDB:
 			raise ElementNotFoundException( Ladder(id) )
 
 	def GetLadderName(self, ladder_id):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 
 		ladder = session.query( Ladder ).filter( Ladder.id == ladder_id ).first()
 		laddername = ""
@@ -102,13 +102,13 @@ class LadderDB:
 		return laddername
 
 	def LadderExists(self, id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		count = session.query( Ladder ).filter( Ladder.id == id ).count()
 		session.close()
 		return count == 1
 
 	def AddOption(self, ladderID, is_whitelist, optionkey, optionvalue  ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 
 		if not self.LadderExists( ladderID ):
 			session.close()
@@ -128,37 +128,37 @@ class LadderDB:
 
 	def GetLadderList(self,order):
 		'''second parameter determines order of returned list (Ladder.name/Ladder.id for example) '''
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladders = session.query(Ladder).order_by(order)
 		session.close()
 		return ladders
 
 	def GetOptions(self, ladder_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		options = session.query( Option ).filter( Option.ladder_id == ladder_id ).order_by( Option.key )
 		session.close()
 		return options
 
 	def GetFilteredOptions(self, ladder_id, whitelist_only ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		options = session.query( Option ).filter( Option.ladder_id == ladder_id ).filter( Option.is_whitelist == whitelist_only).order_by( Option.key )
 		session.close()
 		return options
 
 	def GetOptionKeyExists(self, ladder_id, whitelist_only, keyname ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		count = session.query( Option ).filter( Option.ladder_id == ladder_id ).filter( Option.is_whitelist == whitelist_only).filter( Option.key == keyname ).count()
 		session.close()
 		return count > 0
 
 	def GetOptionKeyValueExists(self, ladder_id, whitelist_only, keyname, value ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		count = session.query( Option ).filter( Option.ladder_id == ladder_id ).filter( Option.is_whitelist == whitelist_only).filter( Option.key == keyname ).filter( Option.value == value ).count()
 		session.close()
 		return count == 1
 
 	def DeleteOption( self, ladder_id, whitelist_only, keyname, value ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		option = session.query( Option ).filter( Option.ladder_id == ladder_id ).filter( Option.is_whitelist == whitelist_only).filter( Option.key == keyname ).filter( Option.value == value ).first()
 		if option:
 			session.delete( option )
@@ -168,7 +168,7 @@ class LadderDB:
 		session.close()
 
 	def GetLadder(self, ladder_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder = session.query(Ladder).filter( Ladder.id == ladder_id ).first()
 		session.close()
 		if not ladder:
@@ -177,7 +177,7 @@ class LadderDB:
 			return ladder
 
 	def GetLadderOption(self, ladder_id, field ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder = session.query(Ladder).filter( Ladder.id == ladder_id ).first()
 		session.close()
 		if not ladder:
@@ -186,7 +186,7 @@ class LadderDB:
 			return getattr(ladder, field)
 
 	def SetLadder(self, ladder ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		existing_ladder = session.query(Ladder).filter( Ladder.id == ladder.id ).first()
 		if not existing_ladder:
 			session.close()
@@ -205,7 +205,7 @@ class LadderDB:
 			session.close()
 
 	def CopyLadder( self, source_id, target_name ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		source_ladder = session.query(Ladder).filter( Ladder.id == source_id ).first()
 		if not source_ladder:
 			session.close()
@@ -231,7 +231,7 @@ class LadderDB:
 		session.close()
 
 	def AddPlayer(self,name,role,pw=''):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.nick == name ).first()
 		if not player:
 			player = Player( name,role, pw )
@@ -240,7 +240,7 @@ class LadderDB:
 		session.close()
 
 	def AssignServerID(self,name, serverplayerid ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.nick == name ).first()
 		if player:
 			player.server_id = serverplayerid
@@ -252,7 +252,7 @@ class LadderDB:
 			raise ElementNotFoundException( str(serverplayerid) )
 
 	def RenamePlayer(self,serverplayerid,newname):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.server_id == serverplayerid ).first()
 		if player:
 			player.nick = newname
@@ -264,7 +264,7 @@ class LadderDB:
 			raise ElementNotFoundException( str(serverplayerid) )
 
 	def GetPlayer( self, name ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.nick == name ).first()
 		if not player:
 			self.AddPlayer( name, Roles.User )
@@ -286,7 +286,7 @@ class LadderDB:
 		return matchresult.CommitMatch(self,doValidation)
 
 	def GetMatchReplay( self, match_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		match = session.query( Match ).filter( Match.id == match_id ).first()
 		if match:
 			replaypath = match.replay
@@ -297,7 +297,7 @@ class LadderDB:
 			raise ElementNotFoundException( str(match_id) )
 
 	def GetRanks( self, ladder_id, player_name=None,limit=-1 ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder_ranking_algo = session.query( Ladder.ranking_algo_id ).filter( Ladder.id == ladder_id ).first()[0]
 		algo_instance = GlobalRankingAlgoSelector.GetInstance( ladder_ranking_algo )
 		entityType = algo_instance.GetDbEntityType()
@@ -319,7 +319,7 @@ class LadderDB:
 
 	def GetPlayerRanks( self, player_name ):
 		res = dict() # rank -> ( algoname , laddername )
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladders = session.query( Ladder ).all()
 		player = session.query( Player ).filter( Player.nick == player_name ).first()
 		if player:
@@ -334,7 +334,7 @@ class LadderDB:
 		return res
 
 	def GetPlayerPosition(self, ladder_id, player_id):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.id == player_id ).first()
 		pos = -1
 		ranks = self.GetRanks( ladder_id )
@@ -358,7 +358,7 @@ class LadderDB:
 		return pos
 
 	def AccessCheck( self, ladder_id, username, role ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		try:
 			player_query = session.query( Player ).filter( Player.nick == username )
 			if player_query.count () == 0:
@@ -399,7 +399,7 @@ class LadderDB:
 		self.DeleteOption(  ladder_id, True, Option.adminkey, username )
 
 	def AddGlobalAdmin( self, username ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.nick == username ).first()
 		if not player:
 			self.AddPlayer( username, Roles.GlobalAdmin )
@@ -410,7 +410,7 @@ class LadderDB:
 		session.close()
 
 	def DeleteGlobalAdmin( self, username ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = session.query( Player ).filter( Player.nick == username ).first()
 		if not player:
 			session.close()
@@ -424,7 +424,7 @@ class LadderDB:
 	def SetLadderRankingAlgo( self, ladder_id, algoname ):
 		ladder = self.GetLadder( ladder_id )
 		if ladder.ranking_algo_id != algoname:
-			session = self.sessionmaker()
+			session = self._sessionmaker()
 			ladder.ranking_algo_id = algoname
 			algo_instance = GlobalRankingAlgoSelector.GetInstance( ladder.ranking_algo_id )
 			entityType = algo_instance.GetDbEntityType()
@@ -446,7 +446,7 @@ class LadderDB:
 		if player_delta == 0:
 			return
 		ladder = self.GetLadder( ladder_id )
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder.match_average_sum += player_delta
 		ladder.match_average_count += 1
 		session.add( ladder )
@@ -454,7 +454,7 @@ class LadderDB:
 		session.close()
 
 	def RecalcRankings( self, ladder_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder = self.GetLadder( ladder_id )
 		ladder.match_average_sum = 0
 		ladder.match_average_count = 0
@@ -470,7 +470,7 @@ class LadderDB:
 		session.close()
 
 	def GetMatches( self, ladder_id, order=Match.date.desc() ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		matches = session.query( Match ).filter( Match.ladder_id == ladder_id ).order_by( order )
 		session.close()
 		if matches.count() < 1:
@@ -478,7 +478,7 @@ class LadderDB:
 		return matches.all()
 
 	def DeleteMatch( self, ladder_id, match_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder = self.GetLadder( ladder_id )
 		match = session.query( Match ).filter( Match.id == match_id ).first()
 		if match:
@@ -497,7 +497,7 @@ class LadderDB:
 		self.RecalcRankings( ladder_id )
 
 	def BanPlayer( self, ladder_id, username, banlength=None ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = self.GetPlayer( username )
 		ban = Bans( )
 		ban.player_id = player.id
@@ -514,7 +514,7 @@ class LadderDB:
 		session.close()
 
 	def UnbanPlayer( self, username, ladder_id=-1, just_expire=True ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		player = self.GetPlayer( username )
 		bans = session.query( Bans ).filter( Bans.player_id == player.id ).filter( Bans.ladder_id == ladder_id ).all()
 		for b in bans:
@@ -528,7 +528,7 @@ class LadderDB:
 
 
 	def GetBansPerLadder( self, ladder_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		if ladder_id == -1:
 			bans = session.query( Bans ).filter( Bans.end >= datetime.now() ).all()
 		else:
@@ -537,13 +537,13 @@ class LadderDB:
 		return bans
 
 	def GetBansPerPlayer( self, player_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		bans = session.query( Bans ).filter( Bans.player_id == player_id ).all()
 		session.close()
 		return bans
 
 	def GetDBRevision(self):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		rev = session.query( Config.dbrevision ).order_by( Config.dbrevision.desc() ).first()
 		if not rev:
 			#default value
@@ -554,7 +554,7 @@ class LadderDB:
 		return rev
 
 	def SetDBRevision(self,rev):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		conf = session.query( Config ).first()
 		if not conf:
 			#default value
@@ -565,7 +565,7 @@ class LadderDB:
 		session.close()
 
 	def UpdateDBScheme( self, oldrev, current_db_rev ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		if current_db_rev > oldrev:
 			if oldrev == -1:
 				results = session.query( Result ).all()
@@ -587,7 +587,7 @@ class LadderDB:
 		session.close()
 
 	def GetLadderByPlayer( self, player_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ret = session.query( Ladder ).filter( Ladder.id.in_( session.query( Result.ladder_id ).\
 			filter( Result.player_id == player_id ) ) ).order_by( Ladder.id )
 		session.close()
@@ -597,7 +597,7 @@ class LadderDB:
 			return []
 
 	def MergeAccounts( self, from_nick, to_nick, override_conflict = False ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		from_player = self.GetPlayer( from_nick )
 		to_player = self.GetPlayer( to_nick )
 		from_results = session.query( Result ).filter( Result.player_id == from_player.id )
@@ -644,7 +644,7 @@ class LadderDB:
 		return result
 
 	def GetRankAndPositionInfo(self, players, ladder_id ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		ladder = self.GetLadder( ladder_id )
 		res = dict()
 		for player in session.query( Player ).filter( Player.nick.in_(players) ):
@@ -659,7 +659,7 @@ class LadderDB:
 		return res
 
 	def SetPassword( self, nick, password ):
-		session = self.sessionmaker()
+		session = self._sessionmaker()
 		try:
 			player = self.GetPlayer( nick )
 			player.SetPassword( password )

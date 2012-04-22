@@ -10,7 +10,7 @@ def output(  ):
 	try:
 		limit = 10
 		template = env.get_template('fame.html')
-		s = db.sessionmaker()
+		s = db.session()
 		player_ids = s.query( Result.player_id ).group_by( Result.player_id )
 		ladder_playerpos = dict()
 		playerpos = []

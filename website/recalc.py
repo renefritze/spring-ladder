@@ -14,7 +14,7 @@ from auth import AuthDecorator
 @AuthDecorator( Roles.User, db )
 def output( ):
 
-	session = db.sessionmaker()
+	session = db.session()
 	user = request.player
 	try:
 		id = getSingleField( 'id', request, getSingleFieldPOST('id', request )  )

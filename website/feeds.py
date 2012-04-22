@@ -28,7 +28,7 @@ def matches_rss(ladder_id):
 	def get_rss_out(l_id):
 		try:
 			base_url = config.get('ladder', 'base_url')
-			s = db.sessionmaker()
+			s = db.session()
 			limit = 10
 			matches = s.query( Match ).filter( Match.ladder_id == l_id )
 			ladder_name = s.query( Ladder.name ).filter( Ladder.id == l_id ).one()
@@ -60,7 +60,7 @@ def all_matches_rss():
 	def all_get_rss_out():
 		try:
 			base_url = config.get('ladder', 'base_url')
-			s = db.sessionmaker()
+			s = db.session()
 			limit = 10
 			matches = s.query( Match )
 			items = get_items( matches )
@@ -93,7 +93,7 @@ def scores_rss(ladder_id):
 		s = None
 		try:
 			base_url = config.get('ladder','base_url')
-			s = db.sessionmaker()			
+			s = db.session()			
 			lad = db.GetLadder( ladder_id )
 			rank_table = GlobalRankingAlgoSelector.GetWebRepresentation( db.GetRanks( ladder_id ), db )
 			#template = env.get_template('scoreboard.html')

@@ -8,7 +8,7 @@ from globe import db,env
 @route('/')
 def output():
 	try:
-		s = db.sessionmaker()
+		s = db.session()
 		limit = 10
 		matches_header = 'Recent Matches'
 		matches = s.query( Match ).order_by(Match.date.desc())[:limit]

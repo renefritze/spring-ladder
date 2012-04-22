@@ -14,7 +14,7 @@ def output( ):
 	order = getSingleField( 'order', request , 'nick')
 	ladder_id = getSingleField( 'ladder', request )
 	try:
-		s = db.sessionmaker()
+		s = db.session()
 		if player_name:
 			player = db.GetPlayer( player_name )
 			ladders = db.GetLadderByPlayer( player.id )

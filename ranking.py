@@ -95,7 +95,7 @@ class RankingAlgoSelector:
 		return res
 
 def calculateWinnerOrder(match,db):
-		session = db.sessionmaker()
+		session = db.session()
 #		session.add( match ) #w/o this match is unbound, no lazy load of results
 		result_dict = dict()
 		try:
@@ -138,7 +138,7 @@ class SimpleRankAlgo(IRanking):
 	def Update(self,ladder_id,match,db):
 
 		scores, result_dict = calculateWinnerOrder(match,db)
-		session = db.sessionmaker()
+		session = db.session()
 
 		for name,player in result_dict.iteritems():
 			player_id = session.query( Player ).filter( Player.nick == name ).first().id
@@ -156,7 +156,7 @@ class SimpleRankAlgo(IRanking):
 	@staticmethod
 	def GetPrintableRepresentation(rank_list,db):
 		ret = ''
-		s = db.sessionmaker()
+		s = db.session()
 		for rank in rank_list:
 			s.add( rank )
 			ret += 'player: %s\tscore: %4f\n'%(rank.player.nick,rank.points)
@@ -166,7 +166,7 @@ class SimpleRankAlgo(IRanking):
 	def GetWebRepresentation(self,rank_list,db):
 		ret = RankingTable()
 		ret.header = ['nick','score']
-		s = db.sessionmaker()
+		s = db.session()
 		for rank in rank_list:
 			s.add( rank )
 			ret.rows.append( [rank.player.nick , round(rank.points,3) ] )

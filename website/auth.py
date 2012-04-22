@@ -53,7 +53,7 @@ class AuthDecorator(object):
 			if (username == None) | (password == None):
 				return self._401Response()
 
-			session = self.db.sessionmaker()
+			session = self.db.session()
 			try:
 				player = self.db.GetPlayer(username)
 			except:

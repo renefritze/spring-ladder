@@ -20,7 +20,7 @@ if __name__ == "__main__":
 				int(config.get('tasbot', "alchemy-verbose")) )
 	try:
 		lid = sys.argv[1]
-		lad = db.sessionmaker().query( Ladder ).filter( Ladder.id == lid ).one()
+		lad = db.session().query( Ladder ).filter( Ladder.id == lid ).one()
 	except Exception,e:	
 		tasbot.customlog.Log.exception(e)
 		tasbot.customlog.Log.error('first arg needs to be a valid ladder_id')

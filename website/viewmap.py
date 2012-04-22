@@ -8,7 +8,7 @@ from ladderdb import ElementNotFoundException
 @route('/maplist')
 def output( ):
 	limit = int(getSingleField( 'limit', request, 18 ))
-	s = db.sessionmaker()
+	s = db.session()
 	template = env.get_template('viewmaplist.html')
 	if limit > -1:
 		maps = s.query( Map ).all()#order_by(Map.name.desc()).limit(limit).all()

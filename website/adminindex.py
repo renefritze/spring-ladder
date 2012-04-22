@@ -16,7 +16,7 @@ from auth import AuthDecorator
 @AuthDecorator( Roles.User, db )
 def output( ):
 
-	session = db.sessionmaker()
+	session = db.session()
 	user = request.player
 	try:
 		if getSingleFieldPOST( 'addladder', request  ) == 'add':

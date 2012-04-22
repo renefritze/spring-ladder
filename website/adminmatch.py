@@ -13,7 +13,7 @@ def output( ):
 
 	user = request.player
 	try:
-		session = db.sessionmaker()
+		session = db.session()
 		id = getSingleField( 'id', request )
 		mid = getSingleField( 'mid', request )
 		if mid:

@@ -19,7 +19,7 @@ class GlickoRankAlgo(IRanking):
 	def Update(self,ladder_id,match,db):
 		scores, result_dict = calculateWinnerOrder(match,db)
 
-		session = db.sessionmaker()
+		session = db.session()
 		#step one
 		pre = dict() #name -> GlickoRanks
 		avg_match_delta = db.GetAvgMatchDelta( ladder_id )
@@ -124,7 +124,7 @@ class GlickoRankAlgo(IRanking):
 	@staticmethod
 	def GetPrintableRepresentation(rank_list,db):
 		ret = '#position playername\t\t(Rating/RatingDeviation):\n'
-		s = db.sessionmaker()
+		s = db.session()
 		count = 0
 		previousrating = -1
 		same_rating_in_a_row = 0
@@ -146,7 +146,7 @@ class GlickoRankAlgo(IRanking):
 	def GetCandidateOpponents(self,player_nick,ladder_id,db):
 		player = db.GetPlayer( player_nick )
 		player_id = player.id
-		session = db.sessionmaker()
+		session = db.session()
 		playerrank = session.query( GlickoRanks ).filter( GlickoRanks.player_id == player_id ).filter( GlickoRanks.ladder_id == ladder_id ).first()
 		if not playerrank: # use default rank, but don't add it to the db yet
 			playerrank = GlickoRanks()
@@ -175,7 +175,7 @@ class GlickoRankAlgo(IRanking):
 		ret = RankingTable()
 		ret.header = ['nick','rating','RD']
 		ret.rows = []
-		s = db.sessionmaker()
+		s = db.session()
 		for rank in rank_list:
 			s.add( rank )
 			ret.rows.append( [rank.player.nick , round(rank.rating,2), round(rank.rd,4) ] )

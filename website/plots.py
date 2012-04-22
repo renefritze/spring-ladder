@@ -15,7 +15,7 @@ fail_offset = timedelta(days=363)
 @cache.cache('matches_per_ladder',expire=3600)
 def matches_per_ladder( ladderid ):
 	print 'not cached: matches_per_ladder( %s )'% ladderid
-	s = db.sessionmaker()
+	s = db.session()
 	inc = timedelta(days=1)
 	today = datetime.combine(date.today(), time.min ) #datetime( now.year, now.month, now.day )
 	since = today - timedelta(days=7) - fail_offset
@@ -43,7 +43,7 @@ def matches_per_ladder( ladderid ):
 @cache.cache('matches_per_player',expire=3600)
 def matches_per_player( playerid ):
 	print 'not cached: matches_per_player( %s )'% playerid
-	s = db.sessionmaker()
+	s = db.session()
 	inc = timedelta(days=1)
 	today = datetime.combine(date.today(), time.min ) #datetime( now.year, now.month, now.day )
 	since = today - timedelta(days=7) - fail_offset

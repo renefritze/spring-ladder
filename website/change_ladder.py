@@ -34,7 +34,7 @@ def handleAlgoChange( db, env, request, ladder ):
 def output( ):
 
 	id = getSingleField( 'id', request, getSingleFieldPOST('id', request )  )
-	session = db.sessionmaker()
+	session = db.session()
 	user = request.player
 	note = ''
 	extrainfo = None
