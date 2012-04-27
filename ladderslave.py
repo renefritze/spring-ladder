@@ -325,6 +325,8 @@ class Main(IPlugin):
 			self.script += "\n\tMyPlayerName=" + self.app.config.get('tasbot', 'nick') + ";"
 			if len(self.scriptpassword) > 0:
 				self.script += "\n\tMyPasswd=" + self.scriptpassword + ";"
+			else:
+				raise Exception('no script password')
 			self.script += "\n}"
 			f.write(self.script)
 			f.close()
@@ -342,7 +344,7 @@ class Main(IPlugin):
 		self.db = LadderDB( self.app.config.get('tasbot', "alchemy-uri"), [], int(self.app.config.get('tasbot', "alchemy-verbose" )))
 
 	def oncommandfromserver(self,command,args,s):
-		#print "From server: %s | Args : %s" % (command,str(args))
+		self.logger.debug("From server: %s | Args : %s" % (command,str(args)))
 		self.socket = s
 		if command == "JOINBATTLE":
 			self.joinedbattle = True
@@ -371,8 +373,11 @@ class Main(IPlugin):
 		if command == "DISABLEUNITS":
 			for unit in args[1:]:
 				self.disabledunits[unit] = 0
-		if command == "JOINEDBATTLE" and len(args) > 2 and args[0] == self.nick:
-			self.scriptpassword = args[2]
+		if command == "JOINEDBATTLE" :
+			self.log.debug('battle join ' + str(args))
+			if len(args) > 2 and args[0] == self.nick:
+				self.scriptpassword = args[2]
+				self.log.info('sc pw ' + args[2])
 		if command == "SETSCRIPTTAGS":
 			for option in args[0].split():
 				pieces = parselist( option, "=" )
