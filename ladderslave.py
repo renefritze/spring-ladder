@@ -384,10 +384,8 @@ class Main(IPlugin):
 
 	@MinArgs(2)
 	def cmd_joinedbattle(self, args, cmd):
-		print('battle join ' + str(args))
 		if args[1] == self.nick:
 			self.scriptpassword = args[2]
-			print('sc pw ' + args[2])
 
 	@MinArgs(1)
 	def cmd_setscripttags(self, args, cmd):
@@ -786,9 +784,6 @@ class Main(IPlugin):
 					self.allies[bs.ally] = 1
 				else:
 					self.allies[bs.ally] += 1
-#		print "allies:", self.allies
-#		print "teams: ",self.teams
-#		print "battle_statusmap",self.battle_statusmap
 
 	def saybattle(self,socket,battleid,message):
 		for line in message.split('\n'):
