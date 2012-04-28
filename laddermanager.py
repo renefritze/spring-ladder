@@ -775,65 +775,80 @@ class Main(IPlugin):
 			self.mError( err )
 			self.saychannel( socket, 'ladder', err )
 
-	def oncommandfromserver(self,command,args,socket):
-		if command == "SAID" and len(args) > 2 and args[2].startswith("!"):
+	@MinArgs(4)
+	def cmd_said(self,args,cmd):
+		if len(args) > 2 and args[2].startswith("!"):
 			self.oncommandfromuser(args[1],args[0],False,args[2],args[3:],socket)
-		if command == "SAIDPRIVATE" and len(args) > 1 and args[1].startswith("!"):
+
+	@MinArgs(3)
+	def cmd_saidprivate(self,args,cmd):
+		if len(args) > 1 and args[1].startswith("!"):
 			self.oncommandfromuser(args[0],"PM",True,args[1],args[2:],socket)
-		if command == "FORCELEAVECHANNEL" and len(args) > 1:
+
+	@MinArgs(1)
+	def cmd_forceleavechannel(self,args,cmd):
 			if args[0] in self.channels:
 				self.channels.remove(args[0])
 				self.app.config.set('join_channels',"channels", ','.join(self.channels))
 				self.app.SaveConfig()
-		if command == "ADDUSER" and len(args) > 0:
-			name = args[0]
-			basebotname = self.app.config.get('tasbot',"nick")
-			if name.startswith(basebotname):
-				name = name[len(basebotname):] # truncate prefix
-				if name.isdigit():
-					self.botstatus.append(int(name))
-			if len(args) > 2:
-				serveraccountid = int(args[3])
-				try: # if a player is already in the db, but lacks server_id, add it
-					self.db.AssignServerID( name, serveraccountid )
-				except ElementNotFoundException:
-					pass
-				try: # if player in the db with same server_id exists, rename it to the new nick
-					self.db.RenamePlayer( serveraccountid, name )
-				except ElementNotFoundException:
-					pass
-		if command == "REMOVEUSER" and len(args) > 0:
-			name = args[0]
-			basebotname = self.app.config.get('tasbot', "nick")
-			if name.startswith(basebotname):
-				name = name[len(basebotname):] # truncate prefix
-				if name.isdigit():
-					self.botstatus.remove(int(name))
-					if self.closewhenempty:
-						if len(self.botstatus) == 0:
-							self.KillBot()
-		if command == "JOINEDBATTLE" and len(args) > 1:
-			name = args[1]
-			battleid = int(args[0])
-			basebotname = self.app.config.get('tasbot', "nick")
-			if name.startswith(basebotname):
-				name = name[len(basebotname):] # truncate prefix
-				if name.isdigit():
-					number = int(name)
-					if number in self.botstatus:
-						if not battleid in self.battleswithbots:
-							self.battleswithbots.append(battleid)
-		if command == "LEFTBATTLE" and len(args) > 1:
-			name = args[1]
-			battleid = int(args[0])
-			basebotname = self.app.config.get('tasbot', "nick")
-			if name.startswith(basebotname):
-				name = name[len(basebotname):] # truncate prefix
-				if name.isdigit():
-					number = int(name)
-					if number in self.botstatus:
-						if battleid in self.battleswithbots:
-							self.battleswithbots.remove(battleid)
+
+	@MinArgs(1)
+	def cmd_adduser(self,args,cmd):
+		name = args[0]
+		basebotname = self.app.config.get('tasbot',"nick")
+		if name.startswith(basebotname):
+			name = name[len(basebotname):] # truncate prefix
+			if name.isdigit():
+				self.botstatus.append(int(name))
+		if len(args) > 2:
+			serveraccountid = int(args[3])
+			try: # if a player is already in the db, but lacks server_id, add it
+				self.db.AssignServerID( name, serveraccountid )
+			except ElementNotFoundException:
+				pass
+			try: # if player in the db with same server_id exists, rename it to the new nick
+				self.db.RenamePlayer( serveraccountid, name )
+			except ElementNotFoundException:
+				pass
+
+	@MinArgs(1)
+	def cmd_removeuser(self,args,cmd):
+		name = args[0]
+		basebotname = self.app.config.get('tasbot', "nick")
+		if name.startswith(basebotname):
+			name = name[len(basebotname):] # truncate prefix
+			if name.isdigit():
+				self.botstatus.remove(int(name))
+				if self.closewhenempty:
+					if len(self.botstatus) == 0:
+						self.KillBot()
+	
+	@MinArgs(2)
+	def cmd_joinedbattle(self,args,cmd):
+		name = args[1]
+		battleid = int(args[0])
+		basebotname = self.app.config.get('tasbot', "nick")
+		if name.startswith(basebotname):
+			name = name[len(basebotname):] # truncate prefix
+			if name.isdigit():
+				number = int(name)
+				if number in self.botstatus:
+					if not battleid in self.battleswithbots:
+						self.battleswithbots.append(battleid)
+	
+	@MinArgs(2)
+	def cmd_leftbattle(self,args,cmd):
+		name = args[1]
+		battleid = int(args[0])
+		basebotname = self.app.config.get('tasbot', "nick")
+		if name.startswith(basebotname):
+			name = name[len(basebotname):] # truncate prefix
+			if name.isdigit():
+				number = int(name)
+				if number in self.botstatus:
+					if battleid in self.battleswithbots:
+						self.battleswithbots.remove(battleid)
+
 	def updatestatus(self,socket):
 		socket.send("MYSTATUS %i\n" % int(int(0)+int(not self.enabled)*2))
 	def onloggedin(self,socket):
