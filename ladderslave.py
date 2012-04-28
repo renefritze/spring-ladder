@@ -59,7 +59,6 @@ def sendstatus(self, socket ):
 class Main(IPlugin):
 	def __init__(self,name,tasc):
 		IPlugin.__init__(self,name,tasc)
-		self.sock = 0
 		self.app = tasc.main
 		self.battleowner = ""
 		self.battleid = -1
@@ -98,7 +97,7 @@ class Main(IPlugin):
 			pregame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
 
 			if self.ingame == True:
-				self.saybattle( self.socket, self.battleid, "Error: game is already running")
+				self.saybattle( self.tasclient.socket, self.battleid, "Error: game is already running")
 				return
 			self.output = ""
 			self.ingame = True
@@ -132,7 +131,7 @@ class Main(IPlugin):
 			status = self.pr.wait()
 			et = time.time()
 			if status != 0:
-				self.saybattle( self.socket,self.battleid,"Error: Spring exited with status %i" % status)
+				self.saybattle( self.tasclient.socket,self.battleid,"Error: Spring exited with status %i" % status)
 				self.log.error( "Error: Spring exited with status %i" % status )
 				self.log.error( self.output )
 			if doSubmit:
@@ -142,20 +141,20 @@ class Main(IPlugin):
 					matchid = self.db.ReportMatch( mr, True )
 					postgame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
 					news_string = '\n'.join( self.GetRankInfoDifference( pregame_rankinfo, postgame_rankinfo ) )
-					#self.saybattle( self.socket, self.battleid, news_string )
-					self.saybattleex(self.socket, self.battleid, "has submitted the score update to the ladder: http://ladder.springrts.com/viewmatch.py?id=%d"%matchid)
+					#self.saybattle( self.tasclient.socket, self.battleid, news_string )
+					self.saybattleex(self.tasclient.socket, self.battleid, "has submitted the score update to the ladder: http://ladder.springrts.com/viewmatch.py?id=%d"%matchid)
 				except Exception, e:
 					exc = traceback.format_exception(sys.exc_info()[0],sys.exc_info()[1],sys.exc_info()[2])
 					self.log.error(self.output)
 					self.log.exception(e)
-					self.saybattleex(self.socket, self.battleid, "could not submit ladder score updates")
+					self.saybattleex(self.tasclient.socket, self.battleid, "could not submit ladder score updates")
 				if matchid != -1:
 					reply = replay_upload.postReplay( os.getcwd() + "/"+ self.db.GetMatchReplay( matchid ), 'LadderBot', "Ladder: %s, Match #%d" % ( self.db.GetLadderName(self.ladderid), matchid ) )
 					replaysiteok = reply.split()[0] == 'SUCCESS'
 					if replaysiteok:
-						self.saybattleex(self.socket, self.battleid, reply.split()[1] )
+						self.saybattleex(self.tasclient.socket, self.battleid, reply.split()[1] )
 					else:
-						self.saybattleex(self.socket, self.battleid, "error uploading replay to http://replays.adune.nl")
+						self.saybattleex(self.tasclient.socket, self.battleid, "error uploading replay to http://replays.adune.nl")
 
 		except Exception, k:
 			self.log.exception(k)
@@ -307,7 +306,7 @@ class Main(IPlugin):
 
 	def JoinGame(self,s):
 		if self.joinedbattle:
-			sendstatus( self, self.socket )
+			sendstatus( self, self.tasclient.socket )
 			if not self.gamestarted:
 				return
 			if self.ingame:
@@ -403,7 +402,7 @@ class Main(IPlugin):
 			self.battleoptions[key] = value
 
 	def cmd_requestbattlestatus(self, args, cmd):
-		self.socket.send( "MYBATTLESTATUS 4194816 255\n" )#spectator+synced/white
+		self.tasclient.socket.send( "MYBATTLESTATUS 4194816 255\n" )#spectator+synced/white
 
 	def cmd_saidbattle(self, args, cmd):
 		if len(args) > 1 and args[1].startswith("!"):
@@ -412,7 +411,7 @@ class Main(IPlugin):
 			args = args[2:]
 			if len(command) > 0 and command[0] == "!":
 				if not self.db.AccessCheck( -1, who, Roles.User ):
-					self.sayPermissionDenied( self.socket, who, command )
+					self.sayPermissionDenied( self.tasclient.socket, who, command )
 					#log
 					return
 			else:
@@ -429,19 +428,19 @@ class Main(IPlugin):
 		if len(args) == 1 and args[0].isdigit():
 			ladderid = int(args[0])
 		if ladderid == -1:
-			self.saybattle( self.socket, self.battleid,"No ladder has been enabled.")
+			self.saybattle( self.tasclient.socket, self.battleid,"No ladder has been enabled.")
 		elif self.db.LadderExists( ladderid ):
 			laddername = self.db.GetLadderName( ladderid )
-			if self.CheckValidSetup( ladderid, True, self.socket ):
-				self.saybattle( self.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
+			if self.CheckValidSetup( ladderid, True, self.tasclient.socket ):
+				self.saybattle( self.tasclient.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
 		else:
-			self.saybattle( self.socket, self.battleid,"Invalid ladder ID.")
+			self.saybattle( self.tasclient.socket, self.battleid,"Invalid ladder ID.")
 
 	def cmd_said_ladderlist(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
-		self.saybattle( self.socket, self.battleid, "Available ladders, format name: ID:" )
+		self.saybattle( self.tasclient.socket, self.battleid, "Available ladders, format name: ID:" )
 		for l in self.db.GetLadderList(Ladder.name):
-			self.saybattle( self.socket, self.battleid, "%s: %d" %(l.name, l.id ) )
+			self.saybattle( self.tasclient.socket, self.battleid, "%s: %d" %(l.name, l.id ) )
 
 	def cmd_said_ladder(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
@@ -450,36 +449,36 @@ class Main(IPlugin):
 			if ladderid != -1:
 				if self.db.LadderExists( ladderid ):
 					laddername = self.db.GetLadderName( ladderid )
-					self.saybattle( self.socket, self.battleid,"Enabled ladder reporting for ladder: " + laddername )
+					self.saybattle( self.tasclient.socket, self.battleid,"Enabled ladder reporting for ladder: " + laddername )
 					self.ladderid = ladderid
-					if self.CheckValidSetup( ladderid, True, self.socket ):
-						self.saybattle( self.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
+					if self.CheckValidSetup( ladderid, True, self.tasclient.socket ):
+						self.saybattle( self.tasclient.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
 				else:
-					self.saybattle( self.socket, self.battleid,"Invalid ladder ID.")
+					self.saybattle( self.tasclient.socket, self.battleid,"Invalid ladder ID.")
 			else:
 				self.ladderid = ladderid
-				self.saybattle( self.socket, self.battleid,"Ladder reporting disabled.")
+				self.saybattle( self.tasclient.socket, self.battleid,"Ladder reporting disabled.")
 		else:
-			self.saybattle( self.socket, self.battleid,"Invalid command syntax, check !ladderhelp for usage.")
+			self.saybattle( self.tasclient.socket, self.battleid,"Invalid command syntax, check !ladderhelp for usage.")
 
 	def cmd_said_ladderleave(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		self.joinedbattle = False
 		self.log.good("Leaving battle: " + str(self.battleid) )
-		self.socket.send("LEAVEBATTLE\n")
+		self.tasclient.socket.send("LEAVEBATTLE\n")
 		self.toshutdown = True
 		if not self.ingame:
 			self.KillBot()
 
 	def cmd_said_ladderhelp(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
-		self.saybattle( self.socket, self.battleid,  "Hello, I am a bot to manage and keep stats of ladder games.\nYou can use the following commands:")
-		self.saybattle( self.socket, self.battleid, helpstring_user )
+		self.saybattle( self.tasclient.socket, self.battleid,  "Hello, I am a bot to manage and keep stats of ladder games.\nYou can use the following commands:")
+		self.saybattle( self.tasclient.socket, self.battleid, helpstring_user )
 
 	def cmd_said_ladderdebug(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.Owner ):
-			self.sayPermissionDenied( self.socket, who, command )
+			self.sayPermissionDenied( self.tasclient.socket, who, command )
 			#log
 			return
 		import fakeoutput
@@ -491,28 +490,28 @@ class Main(IPlugin):
 		upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
 		players = ['doofus', 'idiot']
 		pregame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
-		self.saybattle( self.socket, self.battleid, 'before:\n' + upd )
+		self.saybattle( self.tasclient.socket, self.battleid, 'before:\n' + upd )
 		try:
 			mr = AutomaticMatchToDbWrapper( output, self.ladderid )
 			repeats = int(args[1]) if len(args) > 1 else 1
 			for i in range(repeats):
 				self.db.ReportMatch( mr, False )#false skips validation check of output against ladder rules
 			upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
-			self.saybattle( self.socket, self.battleid, 'pre-recalc:\n' +upd )
+			self.saybattle( self.tasclient.socket, self.battleid, 'pre-recalc:\n' +upd )
 			self.db.RecalcRankings(self.ladderid)
 		except InvalidOptionSetup, e:
-			self.saybattle( self.socket, self.battleid, str(e) )
+			self.saybattle( self.tasclient.socket, self.battleid, str(e) )
 			return
 
 		upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
-		self.saybattle( self.socket, self.battleid, 'after:\n' +upd )
+		self.saybattle( self.tasclient.socket, self.battleid, 'after:\n' +upd )
 		postgame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
-		self.saybattle( self.socket, self.battleid, '\n'.join( self.GetRankInfoDifference( pregame_rankinfo, postgame_rankinfo ) ) )
+		self.saybattle( self.tasclient.socket, self.battleid, '\n'.join( self.GetRankInfoDifference( pregame_rankinfo, postgame_rankinfo ) ) )
 
 	def cmd_said_ladderforcestart(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.User ):
-			self.sayPermissionDenied( self.socket, who, command )
+			self.sayPermissionDenied( self.tasclient.socket, who, command )
 			#log
 			return
 		self.JoinGame(s)
@@ -520,7 +519,7 @@ class Main(IPlugin):
 	def cmd_said_ladderstress(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.Owner ):
-			self.sayPermissionDenied( self.socket, who, command )
+			self.sayPermissionDenied( self.tasclient.socket, who, command )
 			#log
 			return
 		import fakeoutput
@@ -545,20 +544,20 @@ class Main(IPlugin):
 				upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
 				self.db.RecalcRankings(self.ladderid)
 			except InvalidOptionSetup, e:
-				self.saybattle( self.socket, self.battleid, str(e) )
+				self.saybattle( self.tasclient.socket, self.battleid, str(e) )
 				return
 		upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
-		self.saybattle( self.socket, self.battleid, '%i recalcs took %s:\n'%(times, str(datetime.datetime.now() - now) ))
+		self.saybattle( self.tasclient.socket, self.battleid, '%i recalcs took %s:\n'%(times, str(datetime.datetime.now() - now) ))
 
 	def cmd_said_ladderreportgame(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if len(args) < 2:
-			self.saybattle( self.socket, self.battleid, "Invalid command syntax (too few args), check !ladderhelp for usage." )
+			self.saybattle( self.tasclient.socket, self.battleid, "Invalid command syntax (too few args), check !ladderhelp for usage." )
 		else:
 			ladderid = self.ladderid
 			try:
 				if not self.db.AccessCheck( ladderid, who, Roles.LadderAdmin ):
-					self.sayPermissionDenied( self.socket, who, command )
+					self.sayPermissionDenied( self.tasclient.socket, who, command )
 					#log
 					return
 				ladder = self.db.GetLadder( ladderid )
@@ -567,13 +566,13 @@ class Main(IPlugin):
 				while ( usercounter != len(args) ):
 					username, equal, result = args[usercounter].partition("=")
 					if ( len(result) == 0 ):
-						self.saybattle( self.socket, self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
+						self.saybattle( self.tasclient.socket, self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
 						return
 					userresults[username] = int(result)
 					usercounter = usercounter +1
 
-				if  not self.CheckvalidPlayerSetup( ladderid, True , self.socket ):
-					self.saybattle( self.socket, self.battleid, "Invalid setup" )
+				if  not self.CheckvalidPlayerSetup( ladderid, True , self.tasclient.socket ):
+					self.saybattle( self.tasclient.socket, self.battleid, "Invalid setup" )
 				players = []
 				teams_map = dict()
 				allies_map = dict()
@@ -586,16 +585,16 @@ class Main(IPlugin):
 				mr = ManualMatchToDbWrapper( players, userresults, self.teams, ladderid, self.battleoptions, self.disabledunits, self.bots, self.allies, teams_map, allies_map )
 				try:
 					self.db.ReportMatch( mr )
-					self.saybattleex(self.socket, self.battleid, "has submitted ladder score updates")
+					self.saybattleex(self.tasclient.socket, self.battleid, "has submitted ladder score updates")
 				except BannedPlayersDetectedException, b:
-					self.saybattle( self.socket,self.battleid,str(b) )
+					self.saybattle( self.tasclient.socket,self.battleid,str(b) )
 					self.log.error( b, 'BannedPlayersDetectedException' )
 				except Exception, e:
-					self.saybattle( self.socket,self.battleid,"There was an error reporting the battle outcome: %s"%str(e) )
+					self.saybattle( self.tasclient.socket,self.battleid,"There was an error reporting the battle outcome: %s"%str(e) )
 					self.log.error( e, 'Exception' )
 
 			except ElementNotFoundException, e:
-				self.saybattle( self.socket,self.battleid, "Invalid ladder ID." )
+				self.saybattle( self.tasclient.socket,self.battleid, "Invalid ladder ID." )
 				self.log.error( e, 'ElementNotFoundException' )
 
 	def cmd_said_ladderlistoptions(self, args, cmd):
@@ -605,34 +604,34 @@ class Main(IPlugin):
 		else:
 			ladderid = int(args[0])
 			if self.db.LadderExists( ladderid ):
-				self.saybattle( self.socket,self.battleid, "Ladder: " + self.db.GetLadderName(ladderid) )
-				self.saybattle( self.socket,self.battleid, "Min AIs in a Match ( how many AIs ): " + str(self.db.GetLadderOption( ladderid, "min_ai_count" )) )
-				self.saybattle( self.socket,self.battleid, "Max Ais in a Match ( how many AIs ): " + str(self.db.GetLadderOption( ladderid, "max_ai_count" )) )
-				self.saybattle( self.socket,self.battleid, "Min Players in a Team ( sharing control ): " + str(self.db.GetLadderOption( ladderid, "min_team_size" )) )
-				self.saybattle( self.socket,self.battleid, "Max Players in a Team ( sharing control ): " + str(self.db.GetLadderOption( ladderid, "max_team_size" )) )
-				self.saybattle( self.socket,self.battleid, "Min Teams in an Ally ( being allied ): " + str(self.db.GetLadderOption( ladderid, "min_ally_size" )) )
-				self.saybattle( self.socket,self.battleid, "Max Teams in an Ally ( being allied ): " + str(self.db.GetLadderOption( ladderid, "max_ally_size" )) )
-				self.saybattle( self.socket,self.battleid, "Min Teams in a Match ( how many Teams ): " + str(self.db.GetLadderOption( ladderid, "min_team_count" )) )
-				self.saybattle( self.socket,self.battleid, "Max Teams in a Match ( how many Teams ): " + str(self.db.GetLadderOption( ladderid, "max_team_count" )) )
-				self.saybattle( self.socket,self.battleid, "Min Alliances in a Match ( how many Allys ): " + str(self.db.GetLadderOption( ladderid, "min_ally_count" )) )
-				self.saybattle( self.socket,self.battleid, "Max Alliances in a Match ( how many Allys ): " + str(self.db.GetLadderOption( ladderid, "max_ally_count" )) )
-				self.saybattle( self.socket,self.battleid, "Whitelisted options ( if a key is present, no other value except for those listed will be allowed for such key ):" )
+				self.saybattle( self.tasclient.socket,self.battleid, "Ladder: " + self.db.GetLadderName(ladderid) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Min AIs in a Match ( how many AIs ): " + str(self.db.GetLadderOption( ladderid, "min_ai_count" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Max Ais in a Match ( how many AIs ): " + str(self.db.GetLadderOption( ladderid, "max_ai_count" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Min Players in a Team ( sharing control ): " + str(self.db.GetLadderOption( ladderid, "min_team_size" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Max Players in a Team ( sharing control ): " + str(self.db.GetLadderOption( ladderid, "max_team_size" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Min Teams in an Ally ( being allied ): " + str(self.db.GetLadderOption( ladderid, "min_ally_size" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Max Teams in an Ally ( being allied ): " + str(self.db.GetLadderOption( ladderid, "max_ally_size" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Min Teams in a Match ( how many Teams ): " + str(self.db.GetLadderOption( ladderid, "min_team_count" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Max Teams in a Match ( how many Teams ): " + str(self.db.GetLadderOption( ladderid, "max_team_count" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Min Alliances in a Match ( how many Allys ): " + str(self.db.GetLadderOption( ladderid, "min_ally_count" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Max Alliances in a Match ( how many Allys ): " + str(self.db.GetLadderOption( ladderid, "max_ally_count" )) )
+				self.saybattle( self.tasclient.socket,self.battleid, "Whitelisted options ( if a key is present, no other value except for those listed will be allowed for such key ):" )
 				for opt in self.db.GetFilteredOptions( ladderid, True ):
-					self.saybattle( self.socket,self.battleid, opt.key + ": " + opt.value )
-				self.saybattle( self.socket,self.battleid, "Blacklisted options ( if a value is present for a key, such value won't be allowed ):" )
+					self.saybattle( self.tasclient.socket,self.battleid, opt.key + ": " + opt.value )
+				self.saybattle( self.tasclient.socket,self.battleid, "Blacklisted options ( if a value is present for a key, such value won't be allowed ):" )
 				for opt in self.db.GetFilteredOptions( ladderid, False ):
-					self.saybattle( self.socket,self.battleid, opt.key + ": " + opt.value )
+					self.saybattle( self.tasclient.socket,self.battleid, opt.key + ": " + opt.value )
 			else:
-				self.saybattle( self.socket,self.battleid, "Invalid ladder ID." )
+				self.saybattle( self.tasclient.socket,self.battleid, "Invalid ladder ID." )
 
 	def cmd_said_score(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( -1, who, Roles.User ):
-			self.sayPermissionDenied( self.socket, who, command )
+			self.sayPermissionDenied( self.tasclient.socket, who, command )
 			#log
 			return
 		if len(args) > 2:
-			self.saybattle( self.socket,self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
+			self.saybattle( self.tasclient.socket,self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
 		else:
 			ladderid = self.ladderid
 			playername = ""
@@ -650,23 +649,23 @@ class Main(IPlugin):
 				rep = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( ladderid, playername ), self.db )
 			elif ladderid == -1 and len(playername) != 0:
 				rep = GlobalRankingAlgoSelector.GetPrintableRepresentationPlayer( self.db.GetPlayerRanks( playername ), self.db )
-			self.saybattle( self.socket,self.battleid, rep )
+			self.saybattle( self.tasclient.socket,self.battleid, rep )
 
 	def cmd_said_ladderopponent(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if len(args) > 1:
-			self.saybattle( self.socket,self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
+			self.saybattle( self.tasclient.socket,self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
 			return
 		if len(args) == 1:
 			ladderid = int(args[0])
 		else:
 			ladderid = self.ladderid
 		if not self.db.AccessCheck( ladderid, who, Roles.User ):
-			self.sayPermissionDenied( self.socket, who, command )
+			self.sayPermissionDenied( self.tasclient.socket, who, command )
 			#log
 			return
 		if not self.db.LadderExists( ladderid ):
-			self.saybattle( self.socket,self.battleid, "Invalid ladderID." )
+			self.saybattle( self.tasclient.socket,self.battleid, "Invalid ladderID." )
 			return
 		userlist, ranks = GlobalRankingAlgoSelector.GetCandidateOpponents( who, ladderid, self.db )
 		opponent_found = False
@@ -680,9 +679,9 @@ class Main(IPlugin):
 			if userstatus.afk:
 				continue
 			opponent_found = True
-			self.saybattle( self.socket,self.battleid, ranks[user] )
+			self.saybattle( self.tasclient.socket,self.battleid, ranks[user] )
 		if not opponent_found:
-			self.saybattle( self.socket,self.battleid, "No suitable candidates as opponent are available currently, try again later." )
+			self.saybattle( self.tasclient.socket,self.battleid, "No suitable candidates as opponent are available currently, try again later." )
 
 	def cmd_battleopened(self, args, cmd):
 		if len(args) > 12 and int(args[0]) == self.battleid:
@@ -704,7 +703,7 @@ class Main(IPlugin):
 	def cmd_clientstatus(self, args, cmd):
 		if len(args) > 1 and len(self.battlefounder) != 0 and args[0] == self.battlefounder:
 			self.gamestarted = getingame(int(args[1]))
-			self.JoinGame(self.socket)
+			self.JoinGame(self.tasclient.socket)
 
 	def cmd_clientbattlestatus(self, args, cmd):
 		if len(args) != 3:
