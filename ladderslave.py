@@ -428,6 +428,7 @@ class Main(IPlugin):
 				pass
 
 	def cmd_said_ladderchecksetup(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		ladderid = self.ladderid
 		if len(args) == 1 and args[0].isdigit():
 			ladderid = int(args[0])
@@ -441,11 +442,13 @@ class Main(IPlugin):
 			self.saybattle( self.socket, self.battleid,"Invalid ladder ID.")
 
 	def cmd_said_ladderlist(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		self.saybattle( self.socket, self.battleid, "Available ladders, format name: ID:" )
 		for l in self.db.GetLadderList(Ladder.name):
 			self.saybattle( self.socket, self.battleid, "%s: %d" %(l.name, l.id ) )
 
 	def cmd_said_ladder(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if len(args) == 1 and args[0].isdigit():
 			ladderid = int(args[0])
 			if ladderid != -1:
@@ -464,6 +467,7 @@ class Main(IPlugin):
 			self.saybattle( self.socket, self.battleid,"Invalid command syntax, check !ladderhelp for usage.")
 
 	def cmd_said_ladderleave(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		self.joinedbattle = False
 		self.log.good("Leaving battle: " + str(self.battleid) )
 		self.socket.send("LEAVEBATTLE\n")
@@ -472,6 +476,7 @@ class Main(IPlugin):
 			self.KillBot()
 
 	def cmd_said_ladderhelp(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		self.saybattle( self.socket, self.battleid,  "Hello, I am a bot to manage and keep stats of ladder games.\nYou can use the following commands:")
 		self.saybattle( self.socket, self.battleid, helpstring_user )
 
@@ -509,6 +514,7 @@ class Main(IPlugin):
 		self.saybattle( self.socket, self.battleid, '\n'.join( self.GetRankInfoDifference( pregame_rankinfo, postgame_rankinfo ) ) )
 
 	def cmd_said_ladderforcestart(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.User ):
 			self.sayPermissionDenied( self.socket, who, command )
 			#log
@@ -516,6 +522,7 @@ class Main(IPlugin):
 		self.JoinGame(s)
 
 	def cmd_said_ladderstress(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.Owner ):
 			self.sayPermissionDenied( self.socket, who, command )
 			#log
@@ -548,6 +555,7 @@ class Main(IPlugin):
 		self.saybattle( self.socket, self.battleid, '%i recalcs took %s:\n'%(times, str(datetime.datetime.now() - now) ))
 
 	def cmd_said_ladderreportgame(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if len(args) < 2:
 			self.saybattle( self.socket, self.battleid, "Invalid command syntax (too few args), check !ladderhelp for usage." )
 		else:
@@ -595,6 +603,7 @@ class Main(IPlugin):
 				self.log.error( e, 'ElementNotFoundException' )
 
 	def cmd_said_ladderlistoptions(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if len(args) != 1 or not args[0].isdigit():
 			ladderid =  self.ladderid
 		else:
@@ -621,6 +630,7 @@ class Main(IPlugin):
 				self.saybattle( self.socket,self.battleid, "Invalid ladder ID." )
 
 	def cmd_said_score(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( -1, who, Roles.User ):
 			self.sayPermissionDenied( self.socket, who, command )
 			#log
@@ -647,6 +657,7 @@ class Main(IPlugin):
 			self.saybattle( self.socket,self.battleid, rep )
 
 	def cmd_said_ladderopponent(self, args, cmd):
+		who, command, args = args[0], args[1], args[2:]
 		if len(args) > 1:
 			self.saybattle( self.socket,self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
 			return
