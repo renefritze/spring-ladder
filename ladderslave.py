@@ -429,7 +429,7 @@ class Main(IPlugin):
 			except Exception:
 				pass
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderchecksetup(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		ladderid = self.ladderid
@@ -444,14 +444,14 @@ class Main(IPlugin):
 		else:
 			self.saybattle( self.tasclient.socket, self.battleid,"Invalid ladder ID.")
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderlist(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		self.saybattle( self.tasclient.socket, self.battleid, "Available ladders, format name: ID:" )
 		for l in self.db.GetLadderList(Ladder.name):
 			self.saybattle( self.tasclient.socket, self.battleid, "%s: %d" %(l.name, l.id ) )
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladder(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if len(args) == 1 and args[0].isdigit():
@@ -471,7 +471,7 @@ class Main(IPlugin):
 		else:
 			self.saybattle( self.tasclient.socket, self.battleid,"Invalid command syntax, check !ladderhelp for usage.")
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderleave(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		self.joinedbattle = False
@@ -481,13 +481,13 @@ class Main(IPlugin):
 		if not self.ingame:
 			self.KillBot()
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderhelp(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		self.saybattle( self.tasclient.socket, self.battleid,  "Hello, I am a bot to manage and keep stats of ladder games.\nYou can use the following commands:")
 		self.saybattle( self.tasclient.socket, self.battleid, helpstring_user )
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderdebug(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.Owner ):
@@ -521,7 +521,7 @@ class Main(IPlugin):
 		postgame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
 		self.saybattle( self.tasclient.socket, self.battleid, '\n'.join( self._get_rankinfo_difference( pregame_rankinfo, postgame_rankinfo ) ) )
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderforcestart(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.User ):
@@ -530,7 +530,7 @@ class Main(IPlugin):
 			return
 		self.JoinGame(s)
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderstress(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( self.ladderid, who, Roles.Owner ):
@@ -564,56 +564,53 @@ class Main(IPlugin):
 		upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
 		self.saybattle( self.tasclient.socket, self.battleid, '%i recalcs took %s:\n'%(times, str(datetime.datetime.now() - now) ))
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderreportgame(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
-		if len(args) < 2:
-			self.saybattle( self.tasclient.socket, self.battleid, "Invalid command syntax (too few args), check !ladderhelp for usage." )
-		else:
-			ladderid = self.ladderid
-			try:
-				if not self.db.AccessCheck( ladderid, who, Roles.LadderAdmin ):
-					self.sayPermissionDenied( self.tasclient.socket, who, command )
-					#log
+		ladderid = self.ladderid
+		try:
+			if not self.db.AccessCheck( ladderid, who, Roles.LadderAdmin ):
+				self.sayPermissionDenied( self.tasclient.socket, who, command )
+				#log
+				return
+			ladder = self.db.GetLadder( ladderid )
+			usercounter = 0
+			userresults = dict()
+			while ( usercounter != len(args) ):
+				username, equal, result = args[usercounter].partition("=")
+				if ( len(result) == 0 ):
+					self.saybattle( self.tasclient.socket, self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
 					return
-				ladder = self.db.GetLadder( ladderid )
-				usercounter = 0
-				userresults = dict()
-				while ( usercounter != len(args) ):
-					username, equal, result = args[usercounter].partition("=")
-					if ( len(result) == 0 ):
-						self.saybattle( self.tasclient.socket, self.battleid, "Invalid command syntax, check !ladderhelp for usage." )
-						return
-					userresults[username] = int(result)
-					usercounter = usercounter +1
+				userresults[username] = int(result)
+				usercounter = usercounter +1
 
-				if  not self.CheckvalidPlayerSetup( ladderid, True , self.tasclient.socket ):
-					self.saybattle( self.tasclient.socket, self.battleid, "Invalid setup" )
-				players = []
-				teams_map = dict()
-				allies_map = dict()
-				for player in self.battle_statusmap:
-					status = self.battle_statusmap[player]
-					if not status.spec and player != self.app.config.get('', 'nick'):
-						players.append(player)
-						teams_map[player] = status.team
-						allies_map[player] = status.ally
-				mr = ManualMatchToDbWrapper( players, userresults, self.teams, ladderid, self.battleoptions, self.disabledunits, self.bots, self.allies, teams_map, allies_map )
-				try:
-					self.db.ReportMatch( mr )
-					self.saybattleex(self.tasclient.socket, self.battleid, "has submitted ladder score updates")
-				except BannedPlayersDetectedException, b:
-					self.saybattle( self.tasclient.socket,self.battleid,str(b) )
-					self.log.error( b, 'BannedPlayersDetectedException' )
-				except Exception, e:
-					self.saybattle( self.tasclient.socket,self.battleid,"There was an error reporting the battle outcome: %s"%str(e) )
-					self.log.error( e, 'Exception' )
+			if  not self.CheckvalidPlayerSetup( ladderid, True , self.tasclient.socket ):
+				self.saybattle( self.tasclient.socket, self.battleid, "Invalid setup" )
+			players = []
+			teams_map = dict()
+			allies_map = dict()
+			for player in self.battle_statusmap:
+				status = self.battle_statusmap[player]
+				if not status.spec and player != self.app.config.get('', 'nick'):
+					players.append(player)
+					teams_map[player] = status.team
+					allies_map[player] = status.ally
+			mr = ManualMatchToDbWrapper( players, userresults, self.teams, ladderid, self.battleoptions, self.disabledunits, self.bots, self.allies, teams_map, allies_map )
+			try:
+				self.db.ReportMatch( mr )
+				self.saybattleex(self.tasclient.socket, self.battleid, "has submitted ladder score updates")
+			except BannedPlayersDetectedException, b:
+				self.saybattle( self.tasclient.socket,self.battleid,str(b) )
+				self.log.error( b, 'BannedPlayersDetectedException' )
+			except Exception, e:
+				self.saybattle( self.tasclient.socket,self.battleid,"There was an error reporting the battle outcome: %s"%str(e) )
+				self.log.error( e, 'Exception' )
 
-			except ElementNotFoundException, e:
-				self.saybattle( self.tasclient.socket,self.battleid, "Invalid ladder ID." )
-				self.log.error( e, 'ElementNotFoundException' )
+		except ElementNotFoundException, e:
+			self.saybattle( self.tasclient.socket,self.battleid, "Invalid ladder ID." )
+			self.log.error( e, 'ElementNotFoundException' )
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_ladderlistoptions(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if len(args) != 1 or not args[0].isdigit():
@@ -641,7 +638,7 @@ class Main(IPlugin):
 			else:
 				self.saybattle( self.tasclient.socket,self.battleid, "Invalid ladder ID." )
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_saidbattle_score(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		if not self.db.AccessCheck( -1, who, Roles.User ):
@@ -774,7 +771,7 @@ class Main(IPlugin):
 	def cmd_logininfoend(self,args,cmd):
 		sendstatus( self, self.tasclient.socket )
 		random.seed()
-		self.tasclient.send("JOINBATTLE %d %s %08x\n" % ( self.battleid, self.battlepassword, random.randint(0,2^32) ) )
+		self.tasclient.socket.send("JOINBATTLE %d %s %08x\n" % ( self.battleid, self.battlepassword, random.randint(0,2^32) ) )
 
 	def FillTeamAndAllies(self):
 		self.teams = dict()
