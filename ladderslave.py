@@ -343,10 +343,6 @@ class Main(IPlugin):
 		self.log.init( self.app.config.get('tasbot', 'nick')+'.log', 'info' )
 		self.db = LadderDB( self.app.config.get('tasbot', "alchemy-uri"), [], int(self.app.config.get('tasbot', "alchemy-verbose" )))
 
-	def oncommandfromserver(self,command,args,s):
-		self.logger.debug("From server: %s | Args : %s" % (command,str(args)))
-		self.socket = s
-
 	def cmd_joinbattle(self, args, cmd):
 		self.joinedbattle = True
 		self.log.good("Joined battle: " + str(self.battleid) )
@@ -427,7 +423,7 @@ class Main(IPlugin):
 			except Exception:
 				pass
 
-	def cmd_said_ladderchecksetup(self, args, cmd):
+	def cmd_saidbattle_ladderchecksetup(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
 		ladderid = self.ladderid
 		if len(args) == 1 and args[0].isdigit():
@@ -708,7 +704,7 @@ class Main(IPlugin):
 	def cmd_clientstatus(self, args, cmd):
 		if len(args) > 1 and len(self.battlefounder) != 0 and args[0] == self.battlefounder:
 			self.gamestarted = getingame(int(args[1]))
-			self.JoinGame(s)
+			self.JoinGame(self.socket)
 
 	def cmd_clientbattlestatus(self, args, cmd):
 		if len(args) != 3:
@@ -727,6 +723,7 @@ class Main(IPlugin):
 				self.FillTeamAndAllies()
 			if player == self.nick:
 				self.scriptpassword = ""
+
 	def cmd_addbot(self, args, cmd):
 		if len(args) != 6:
 			self.logger.error( "invalid ADDBOT:%s"%(args) )
@@ -808,3 +805,16 @@ class Main(IPlugin):
 				pre_pos = pre[nick][1]
 			res.append( '%s:\tNew position: %d (%d)\t New Rank: %s (was %s)'%(nick, post_pos, (pre_pos - post_pos),str(post_rank), str(pre_rank) ) )
 		return res
+		
+	cmd_saidbattle_ladderlist = cmd_said_ladderlist
+	cmd_saidbattle_ladder =	cmd_said_ladder
+	cmd_saidbattle_ladderleave = cmd_said_ladderleave
+	cmd_saidbattle_ladderhelp = cmd_said_ladderhelp
+	cmd_saidbattle_ladderdebug = cmd_said_ladderdebug
+	cmd_saidbattle_ladderforcestart = cmd_said_ladderforcestart
+	cmd_saidbattle_ladderstress = cmd_said_ladderstress
+	cmd_saidbattle_ladderreportgame = cmd_said_ladderreportgame
+	cmd_saidbattle_ladderlistoptions = cmd_said_ladderlistoptions
+	cmd_saidbattle_score = cmd_said_score
+	cmd_saidbattle_ladderopponent = cmd_said_ladderopponent
+	
