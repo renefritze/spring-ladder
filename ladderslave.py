@@ -138,7 +138,7 @@ class Main(IPlugin):
 			if doSubmit:
 				matchid = -1
 				try:
-					mr = AutomaticMatchToDbWrapper( self.output, self.ladderid )
+					mr = AutomaticMatchToDbWrapper( self.output, self.ladderid, self.app.config)
 					matchid = self.db.ReportMatch( mr, True )
 					postgame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
 					news_string = '\n'.join( self._get_rankinfo_difference( pregame_rankinfo, postgame_rankinfo ) )
@@ -382,12 +382,12 @@ class Main(IPlugin):
 		for unit in args[1:]:
 			self.disabledunits[unit] = 0
 
-	@MinArgs(3)
+	@MinArgs(2)
 	def cmd_joinedbattle(self, args, cmd):
-		self.log.debug('battle join ' + str(args))
-		if args[0] == self.nick:
+		print('battle join ' + str(args))
+		if args[1] == self.nick:
 			self.scriptpassword = args[2]
-			self.log.info('sc pw ' + args[2])
+			print('sc pw ' + args[2])
 
 	@MinArgs(1)
 	def cmd_setscripttags(self, args, cmd):
@@ -505,7 +505,7 @@ class Main(IPlugin):
 		pregame_rankinfo = self.db.GetRankAndPositionInfo( players, self.ladderid )
 		self.saybattle( self.tasclient.socket, self.battleid, 'before:\n' + upd )
 		try:
-			mr = AutomaticMatchToDbWrapper( output, self.ladderid )
+			mr = AutomaticMatchToDbWrapper(output, self.ladderid, self.app.config)
 			repeats = int(args[1]) if len(args) > 1 else 1
 			for i in range(repeats):
 				self.db.ReportMatch( mr, False )#false skips validation check of output against ladder rules
@@ -552,7 +552,7 @@ class Main(IPlugin):
 		upd = GlobalRankingAlgoSelector.GetPrintableRepresentation( self.db.GetRanks( self.ladderid ), self.db )
 		for i in range ( times ):
 			try:
-				mr = AutomaticMatchToDbWrapper( output, self.ladderid )
+				mr = AutomaticMatchToDbWrapper( output, self.ladderid, self.app.config)
 				repeats = int(args[1]) if len(args) > 1 else 1
 				for i in range(repeats):
 					self.db.ReportMatch( mr, False )#false skips validation check of output against ladder rules

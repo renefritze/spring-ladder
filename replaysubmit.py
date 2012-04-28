@@ -9,8 +9,9 @@ from match import AutomaticMatchToDbWrapper, UnterminatedReplayException
 
 
 class ReplayReporter(object):
-	def  __init__ ( self, db ):
+	def  __init__ (self, db, config):
 		self.db = db
+		self.config = config
 
 	def SubmitLadderReplay( self, replaypath, ladderid, do_validation=True ):
 		try:
@@ -19,7 +20,7 @@ class ReplayReporter(object):
 				return False
 			else:
 				try:
-					mr = AutomaticMatchToDbWrapper( replaypath, ladderid )
+					mr = AutomaticMatchToDbWrapper(replaypath, ladderid, self.config)
 					return self.db.ReportMatch( mr, do_validation )
 				except UnterminatedReplayException:
 					Log.error('skipping unterminated replay %s'%replaypath, 'ReplayReporter')

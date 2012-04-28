@@ -29,7 +29,7 @@ if __name__ == "__main__":
 
 	files = sys.argv[2:]
 	fails = []
-	reporter = ReplayReporter(db)
+	reporter = ReplayReporter(db,config)
 	for fn in [ f for f in files if os.path.exists(f)]:
 		reported = reporter.SubmitLadderReplay(fn, lid,False)
 		if not reported:
