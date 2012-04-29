@@ -283,7 +283,7 @@ class LadderDB:
 		"""false skips validation check of output against ladder rules"""
 		if not isinstance( matchresult, MatchToDbWrapper ):
 			raise TypeError
-		return matchresult.CommitMatch(self,doValidation)
+		return matchresult.CommitMatch(doValidation)
 
 	def GetMatchReplay( self, match_id ):
 		session = self._sessionmaker()

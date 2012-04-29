@@ -102,7 +102,7 @@ class Main(IPlugin):
 				return
 			self.output = ""
 			self.ingame = True
-			doSubmit = self.ladderid != -1 and self.db.LadderExists( self.ladderid ) and self.CheckValidSetup(self.ladderid,False,0)
+			doSubmit = self.ladderid != -1 and self.db.LadderExists( self.ladderid ) and len(self.CheckValidSetup(self.ladderid))
 			if doSubmit:
 				self.saybattleex(socket, self.battleid, "will submit the result to the ladder")
 			else:
@@ -191,9 +191,9 @@ class Main(IPlugin):
 			if not self.db.AccessCheck( ladderid, player, Roles.User ):
 				bannedplayers.append(player)
 			if player in self.bots: # it's a bot
-				botlib = self.bots[player]
-				if not botlib in checkedbots:
-					checkedbots.append(botlib)
+				libname = self.bots[player]
+				if not libname in checkedbots:
+					checkedbots.append(libname)
 				else:
 					errors.append('duplicate AI %s'%libname)
 		if len(bannedplayers) != 0:
@@ -216,11 +216,11 @@ class Main(IPlugin):
 		return errors
 
 	def CheckValidOptionsSetup(self, ladderid):
-		laddername = db.GetLadderName(ladderid)
+		laddername = self.db.GetLadderName(ladderid)
 		errors = []
 		for key in self.battleoptions:
 			value = self.battleoptions[key]
-			IsOk = self.CheckOptionOk( db, key, value )
+			IsOk = self.CheckOptionOk( ladderid, key, value )
 			if IsOk != '':
 				errors.append(IsOk)
 		return errors
@@ -358,6 +358,16 @@ class Main(IPlugin):
 			except Exception:
 				pass
 
+	def _check_respond(self, ladderid):
+		laddername = self.db.GetLadderName( ladderid )
+		validation_errors = self.CheckValidSetup(ladderid)
+		if len(validation_errors) == 0:
+			self.saybattle( self.tasclient.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
+		else:
+			self.saybattle(self.tasclient.socket, self.battleid, "Some options are not within ladder rules")
+			for err in validation_errors:
+				self.saybattle(self.tasclient.socket, self.battleid, err)
+
 	@MinArgs(2)
 	def cmd_saidbattle_ladderchecksetup(self, args, cmd):
 		who, command, args = args[0], args[1], args[2:]
@@ -367,9 +377,7 @@ class Main(IPlugin):
 		if ladderid == -1:
 			self.saybattle( self.tasclient.socket, self.battleid,"No ladder has been enabled.")
 		elif self.db.LadderExists( ladderid ):
-			laddername = self.db.GetLadderName( ladderid )
-			if self.CheckValidSetup( ladderid, True, self.tasclient.socket ):
-				self.saybattle( self.tasclient.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
+			self._check_respond(ladderid)
 		else:
 			self.saybattle( self.tasclient.socket, self.battleid,"Invalid ladder ID.")
 
@@ -387,11 +395,7 @@ class Main(IPlugin):
 			ladderid = int(args[0])
 			if ladderid != -1:
 				if self.db.LadderExists( ladderid ):
-					laddername = self.db.GetLadderName( ladderid )
-					self.saybattle( self.tasclient.socket, self.battleid,"Enabled ladder reporting for ladder: " + laddername )
-					self.ladderid = ladderid
-					if self.CheckValidSetup( ladderid, True, self.tasclient.socket ):
-						self.saybattle( self.tasclient.socket, self.battleid, "All settings are compatible with the ladder " + laddername )
+					self._check_respond(ladderid)
 				else:
 					self.saybattle( self.tasclient.socket, self.battleid,"Invalid ladder ID.")
 			else:

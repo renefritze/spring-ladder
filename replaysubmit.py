@@ -20,7 +20,8 @@ class ReplayReporter(object):
 				return False
 			else:
 				try:
-					mr = AutomaticMatchToDbWrapper(replaypath, ladderid, self.config)
+					open(replaypath).close()
+					mr = AutomaticMatchToDbWrapper(replaypath, ladderid, self.config, self.db)
 					return self.db.ReportMatch( mr, do_validation )
 				except UnterminatedReplayException:
 					Log.error('skipping unterminated replay %s'%replaypath, 'ReplayReporter')

@@ -6,7 +6,7 @@ import pprint
 
 
 import tasbot
-from ladderdb import LadderDB
+from ladderdb import *
 from replaysubmit import ReplayReporter
 from db_entities import Ladder
 
@@ -20,7 +20,7 @@ if __name__ == "__main__":
 				int(config.get('tasbot', "alchemy-verbose")) )
 	try:
 		lid = sys.argv[1]
-		lad = db.session().query( Ladder ).filter( Ladder.id == lid ).one()
+		l = db.GetLadder(lid)
 	except Exception,e:	
 		tasbot.customlog.Log.exception(e)
 		tasbot.customlog.Log.error('first arg needs to be a valid ladder_id')
