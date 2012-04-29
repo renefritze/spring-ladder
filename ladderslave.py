@@ -176,134 +176,65 @@ class Main(IPlugin):
 		else:
 			os.kill(os.getpid(),signal.SIGKILL)
 
-	def CheckValidSetup( self, ladderid, echoerrors, socket ):
-		a = self.CheckvalidPlayerSetup(ladderid,echoerrors,socket)
-		b = self.CheckValidOptionsSetup(ladderid,echoerrors,socket)
-		return a and b
+	def CheckValidSetup(self, ladderid):
+		a = self.CheckvalidPlayerSetup(ladderid)
+		b = self.CheckValidOptionsSetup(ladderid)
+		return a + b
 
-	def CheckvalidPlayerSetup( self, ladderid, echoerrors, socket ):
-		IsOk = True
-		laddername = self.db.GetLadderName( ladderid )
+	def CheckvalidPlayerSetup( self, ladderid ):
+		errors = []
 		teamcount = len(self.teams)
 		allycount = len(self.allies)
-		botcount = len(self.bots)
-
-		bannedplayers = ""
-		duplicatebots = ""
+		bannedplayers = []
 		checkedbots = []
 		for player in self.battle_statusmap:
 			if not self.db.AccessCheck( ladderid, player, Roles.User ):
-				IsOk = False
-				bannedplayers += " " + player
+				bannedplayers.append(player)
 			if player in self.bots: # it's a bot
 				botlib = self.bots[player]
 				if not botlib in checkedbots:
 					checkedbots.append(botlib)
 				else:
-					IsOk = False
-					duplicatebots += " " + player
-		if not len(bannedplayers) == 0 and echoerrors:
-			self.saybattle( socket, self.battleid, "There are banned player for " + laddername  + " (" + bannedplayers + " )" )
-		if not len(duplicatebots) == 0 and echoerrors:
-			self.saybattle( socket, self.battleid, "There are too many bots of the same type (" + duplicatebots + " )" )
+					errors.append('duplicate AI %s'%libname)
+		if len(bannedplayers) != 0:
+			errors.append('Banned players %s'%' '.join(bannedplayers))
+		def _range_check(var, name):
+			upper = self.db.GetLadderOption( ladderid, "max_%s"%name )
+			lower = self.db.GetLadderOption( ladderid, "min_%s"%name )
+			if not(lower <= var <= upper):
+				errors.append('%s (%d) out of range: [%d,%d]'%(name, var, lower, upper))
 
-		minbotcount = self.db.GetLadderOption( ladderid, "min_ai_count" )
-		maxbotcount = self.db.GetLadderOption( ladderid, "max_ai_count" )
-		minteamcount = self.db.GetLadderOption( ladderid, "min_team_count" )
-		maxteamcount = self.db.GetLadderOption( ladderid, "max_team_count" )
-		minallycount = self.db.GetLadderOption( ladderid, "min_ally_count" )
-		maxallycount = self.db.GetLadderOption( ladderid, "max_ally_count" )
-		if botcount < minbotcount:
-			if echoerrors:
-				self.saybattle( socket, self.battleid, "There are too few AIs for " + laddername  + " (" + str(botcount) + ")" )
-			IsOk =  False
-		if botcount > maxbotcount:
-			if echoerrors:
-				self.saybattle( socket, self.battleid, "There are too many AIs for " + laddername + " (" + str(botcount) + ")" )
-			IsOk = False
-		if teamcount < minteamcount:
-			if echoerrors:
-				self.saybattle( socket, self.battleid, "There are too few control teams for " + laddername  + " (" + str(teamcount) + ")" )
-			IsOk =  False
-		if teamcount > maxteamcount:
-			if echoerrors:
-				self.saybattle( socket, self.battleid, "There are too many control teams for " + laddername + " (" + str(teamcount) + ")" )
-			IsOk = False
-		if allycount < minallycount:
-			if echoerrors:
-				self.saybattle( socket, self.battleid, "There are too few allies for " + laddername  + " (" + str(allycount) + ")" )
-			IsOk = False
-		if allycount > maxallycount:
-			if echoerrors:
-				self.saybattle( socket, self.battleid, "There are too few allies for " + laddername  + " (" + str(allycount) + ")" )
-			IsOk = False
-		minteamsize = self.db.GetLadderOption( ladderid, "min_team_size" )
-		maxteamsize = self.db.GetLadderOption( ladderid, "max_team_size" )
-		minallysize = self.db.GetLadderOption( ladderid, "min_ally_size" )
-		maxallysize = self.db.GetLadderOption( ladderid, "max_ally_size" )
-		teamsizesok = True
-		errorstring = "The following control teams have too few players in them for " + laddername + ":\n"
+		_range_check(len(self.bots), 'ai_count')
+		_range_check(len(self.teams), 'team_count')
+		_range_check(len(self.allies), 'ally_count')
 		for team in self.teams:
 			teamsize = self.teams[team]
-			if teamsize < minteamsize:
-				errorstring += str(team) + "=" + str(teamsize) + " "
-				teamsizesok = False
-				IsOk = False
-		if not teamsizesok and echoerrors:
-			self.saybattle( socket, self.battleid, errorstring )
-		teamsizesok = True
-		errorstring = "The following control teams have too many players in them for " + laddername + ":\n"
-		for team in self.teams:
-			if teamsize > maxteamsize:
-				IsOk = False
-				errorstring += str(team) + "=" + str(teamsize) + " "
-				teamsizesok = False
-		if not teamsizesok and echoerrors:
-			self.saybattle( socket, self.battleid, errorstring )
-		allysizesok = True
-		errorstring = "The following ally have too few players in them for " + laddername + ":\n"
+			_range_check(teamsize, 'team_size')
 		for ally in self.allies:
 			allysize = self.allies[ally]
-			if allysize < minallysize:
-				IsOk = False
-				allysizesok = False
-				errorstring += str(team) + "=" + str(teamsize) + " "
-		if not allysizesok and echoerrors:
-			self.saybattle( socket, self.battleid, errorstring )
-		allysizesok = True
-		errorstring = "The following ally have too many players in them for " + laddername + ":\n"
-		for ally in self.allies:
-			allysize = self.allies[ally]
-			if allysize > maxallysize:
-				IsOk = False
-				allysizesok = False
-				errorstring += str(team) + "=" + str(teamsize) + " "
-		if not allysizesok and echoerrors:
-			self.saybattle( socket, self.battleid, errorstring )
-		return IsOk
+			_range_check(allysize, 'ally_size')
+		return errors
 
-
-	def CheckValidOptionsSetup( self, ladderid, echoerrors, socket ):
-		IsOk = True
-		laddername = self.db.GetLadderName( ladderid )
+	def CheckValidOptionsSetup(self, ladderid):
+		laddername = db.GetLadderName(ladderid)
+		errors = []
 		for key in self.battleoptions:
 			value = self.battleoptions[key]
-			OptionOk = self.CheckOptionOk( ladderid, key, value )
-			if not OptionOk:
-				if IsOk and echoerrors:
-					self.saybattle( socket, self.battleid, "The following settings are not compatible with " + laddername + ":" )
-				IsOk = False
-				if echoerrors:
-					self.saybattle( socket, self.battleid, key + "=" + value )
-		return IsOk
+			IsOk = self.CheckOptionOk( db, key, value )
+			if IsOk != '':
+				errors.append(IsOk)
+		return errors
 
 	def CheckOptionOk( self, ladderid, keyname, value ):
-		if self.db.GetOptionKeyValueExists( ladderid, False, keyname, value ): # option in the blacklist
-			return False
-		if self.db.GetOptionKeyExists( ladderid, True, keyname ): # whitelist not empty
-			return self.db.GetOptionKeyValueExists( ladderid, True, keyname, value )
+		if self.db.GetOptionKeyValueExists(ladderid, False, keyname, value ): # option in the blacklist
+			return 'Value %s for key %s is blacklisted'%(str(value), keyname)
+		if self.db.GetOptionKeyExists(ladderid, True, keyname ): # whitelist not empty
+			if self.db.GetOptionKeyValueExists(ladderid, True, keyname, value ):
+				return ''
+			else:
+				return 'value %s for key %s not whiltelisted/ok'%(str(value), keyname)
 		else:
-			return True
+			return ''
 
 	def JoinGame(self,s):
 		if self.joinedbattle:
